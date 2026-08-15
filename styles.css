@@ -1,0 +1,556 @@
+/* ---- custom type ----
+   body: DEWD Cool Old Sign · page headlines: Compass · nav/chips/buttons: DEWD Vintage */
+@font-face {
+  font-family: 'DEWD Cool Old Sign';
+  src: url('/fonts/DEWDCoolOldSignRegular.woff2') format('woff2'),
+       url('/fonts/DEWDCoolOldSignRegular.woff') format('woff');
+  font-weight: normal; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Compass';
+  src: url('/fonts/compass.woff2') format('woff2'),
+       url('/fonts/CompassRegular.woff') format('woff');
+  font-weight: normal; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'DEWD Vintage';
+  src: url('/fonts/DEWDVintage-Regular.woff') format('woff');
+  font-weight: normal; font-style: normal; font-display: swap;
+}
+
+body { margin: 0; }
+
+:root {
+  --paper: #ffffff;
+  --ink: #111111;
+  --mute: #8c8c8c;
+  --line: #e6e6e6;
+}
+* { box-sizing: border-box; }
+.dl-root {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'DEWD Cool Old Sign', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* top bar */
+.dl-top { position: sticky; top: 0; z-index: 20; background: transparent; }
+.dl-toprow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 22px 12px;
+}
+.dl-mark { font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-weight: 600; letter-spacing: 0.22em; font-size: 13px; }
+.dl-topright { display: flex; gap: 8px; }
+.dl-add, .dl-about {
+  font: inherit;
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-size: 13px; cursor: pointer;
+  height: 36px; display: inline-flex; align-items: center;
+  padding: 0 14px; border-radius: 999px;
+  border: 1px solid transparent; background: var(--paper); color: var(--ink);
+  transition: background .15s;
+}
+.dl-about:hover { background: #f2f2f2; }
+.dl-add { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.dl-add:hover { background: #000; }
+.dl-add:focus-visible, .dl-about:focus-visible, .dl-stage:focus-visible,
+.dl-act:focus-visible, .dl-modal-x:focus-visible, .dl-chip:focus-visible,
+.dl-clear:focus-visible, .dl-minitag:focus-visible, .dl-filtericon:focus-visible,
+.dl-shopchip:focus-visible, .dl-buy:focus-visible, .dl-backup-btn:focus-visible,
+.dl-back:focus-visible {
+  outline: 2px solid var(--ink); outline-offset: 2px;
+}
+
+/* filter icon */
+.dl-filtericon {
+  position: relative;
+  width: 36px; height: 36px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; background: var(--paper); color: var(--ink);
+  cursor: pointer; transition: background .15s, color .15s;
+}
+.dl-filtericon:hover { background: #f2f2f2; }
+.dl-filtericon-on:hover { background: #000; color: var(--paper); }
+.dl-filtericon-on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.dl-filterbadge {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 15px; height: 15px; padding: 0 4px;
+  border-radius: 999px; background: var(--ink); color: var(--paper);
+  border: 1px solid var(--paper);
+  font-family: 'DEWD Cool Old Sign', monospace; font-size: 9px; line-height: 13px;
+}
+
+/* filter bar */
+.dl-filterbar {
+  display: flex; gap: 8px; align-items: center;
+  margin: 0 22px 8px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--paper);
+  overflow-x: auto; scrollbar-width: none;
+}
+.dl-filterbar::-webkit-scrollbar { display: none; }
+.dl-chip {
+  font: inherit;
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-size: 12px; cursor: pointer; white-space: nowrap;
+  padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: border-color .15s, background .15s, color .15s;
+}
+.dl-chip:hover { border-color: var(--ink); }
+.dl-chip-on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.dl-chip-n { font-family: 'DEWD Cool Old Sign', monospace; font-size: 10px; opacity: .65; }
+.dl-chip button {
+  border: none; background: transparent; color: inherit;
+  cursor: pointer; font-size: 13px; line-height: 1; padding: 0;
+}
+.dl-clear {
+  font: inherit;
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-size: 12px; cursor: pointer; white-space: nowrap;
+  background: none; border: none; color: var(--mute);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.dl-clear:hover { color: var(--ink); }
+.dl-filternote { font-size: 13px; color: var(--mute); margin: 0 0 26px; }
+
+/* scroll of days */
+.dl-scroll { max-width: 1060px; margin: 0 auto; padding: 34px 22px 90px; }
+.dl-loading, .dl-end {
+  color: var(--mute); text-align: center; font-size: 13px;
+  padding: 46px 0; letter-spacing: 0.06em;
+}
+.dl-day { margin-bottom: 64px; }
+.dl-dayhead { display: flex; align-items: baseline; gap: 14px; margin-bottom: 14px; }
+.dl-daylabel { font-weight: 600; font-size: 16px; letter-spacing: 0.01em; }
+.dl-count { margin-left: auto; font-family: 'DEWD Cool Old Sign', monospace; font-size: 12px; color: var(--mute); }
+
+/* today's empty stage */
+.dl-stage {
+  width: 100%; min-height: 300px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  border: 1px dashed #c9c9c9; border-radius: 14px;
+  background: transparent; color: var(--ink); font: inherit; font-size: 16px;
+  transition: border-color .2s, background .2s;
+}
+.dl-stage:hover { border-color: var(--ink); background: #fafafa; }
+.dl-stage-title { font-size: 22px; font-weight: 600; }
+.dl-stage-sub { font-size: 13px; color: var(--mute); }
+
+/* image grid */
+.dl-grid { column-count: 3; column-gap: 14px; }
+@media (max-width: 860px) { .dl-grid { column-count: 2; } }
+@media (max-width: 540px) { .dl-grid { column-count: 1; } }
+.dl-fig {
+  position: relative; margin: 0 0 14px; break-inside: avoid;
+  border-radius: 6px; overflow: hidden; background: #f2f2f2;
+}
+.dl-fig img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  animation: dl-in .45s ease both;
+}
+@keyframes dl-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .dl-fig img { animation: none; }
+  .dl-ph { animation: none; }
+}
+.dl-ph {
+  position: absolute; inset: 0;
+  background: linear-gradient(110deg, #f2f2f2 40%, #fafafa 50%, #f2f2f2 60%);
+  background-size: 200% 100%;
+  animation: dl-shimmer 1.4s linear infinite;
+}
+@keyframes dl-shimmer { to { background-position: -200% 0; } }
+.dl-ph-x {
+  animation: none; display: flex; align-items: center; justify-content: center;
+  color: var(--mute); font-size: 12px;
+}
+
+/* per-image actions (↗ page, $ product, # tags, × delete) */
+.dl-fig-actions {
+  position: absolute; top: 8px; right: 8px;
+  display: flex; gap: 6px;
+  opacity: 0; transition: opacity .15s;
+}
+.dl-fig:hover .dl-fig-actions,
+.dl-fig-editing .dl-fig-actions,
+.dl-fig-actions:focus-within { opacity: 1; }
+@media (hover: none) { .dl-fig-actions { opacity: 1; } }
+.dl-act {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: none; cursor: pointer; font-size: 13px; line-height: 1;
+  background: rgba(0,0,0,.55); color: #fff;
+}
+.dl-act:hover { background: rgba(0,0,0,.8); }
+.dl-act-on { background: #000; outline: 1px solid #fff; }
+
+/* chips over the image (page + shop) */
+.dl-chiprow {
+  position: absolute; left: 8px; top: 8px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  max-width: calc(100% - 130px);
+}
+.dl-shopchip {
+  font: inherit;
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-size: 11px; font-weight: 600; cursor: pointer;
+  padding: 5px 11px; border-radius: 999px; border: none;
+  background: var(--paper); color: var(--ink);
+  box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.dl-shopchip:hover { background: var(--ink); color: var(--paper); }
+
+/* tags shown on the image */
+.dl-fig-tags {
+  position: absolute; left: 8px; right: 40px; bottom: 8px;
+  display: flex; flex-wrap: wrap; gap: 5px;
+  opacity: 0; transition: opacity .15s;
+}
+.dl-fig:hover .dl-fig-tags, .dl-fig-tags:focus-within { opacity: 1; }
+@media (hover: none) { .dl-fig-tags { display: none; } }
+.dl-minitag {
+  font: inherit;
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-size: 11px; cursor: pointer;
+  padding: 3px 9px; border-radius: 999px; border: none;
+  background: rgba(255,255,255,.92); color: var(--ink);
+}
+.dl-minitag:hover { background: var(--ink); color: var(--paper); }
+
+/* tag editor overlay */
+.dl-tagedit {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,.96);
+  border-top: 1px solid var(--ink);
+  padding: 10px 10px 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.dl-tagedit-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.dl-tagedit input {
+  font: inherit; font-size: 12px; border: none; outline: none;
+  background: transparent; color: var(--ink);
+  min-width: 90px; flex: 1; padding: 4px 2px;
+}
+.dl-tagedit input::placeholder { color: var(--mute); }
+.dl-tagedit-done {
+  align-self: flex-end;
+  font: inherit; font-size: 11px; cursor: pointer;
+  background: none; border: none; color: var(--mute);
+  text-decoration: underline; text-underline-offset: 3px; padding: 0;
+}
+.dl-tagedit-done:hover { color: var(--ink); }
+
+/* product / page-link editor overlay */
+.dl-prodedit {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,.97);
+  border-top: 1px solid var(--ink);
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.dl-prodedit input {
+  font: inherit; font-size: 12px;
+  border: none; border-bottom: 1px solid var(--line);
+  outline: none; background: transparent; color: var(--ink);
+  padding: 4px 2px;
+}
+.dl-prodedit input:focus { border-bottom-color: var(--ink); }
+.dl-prodedit input::placeholder { color: var(--mute); }
+.dl-pagepick {
+  font: inherit; font-size: 12px; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--paper); padding: 6px 8px;
+}
+.dl-prodedit-row { display: flex; justify-content: flex-end; gap: 14px; margin-top: 2px; }
+.dl-prodedit-save, .dl-prodedit-remove {
+  font: inherit; font-size: 11px; cursor: pointer;
+  background: none; border: none; padding: 0;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.dl-prodedit-save { color: var(--ink); font-weight: 600; }
+.dl-prodedit-remove { color: var(--mute); }
+.dl-prodedit-remove:hover { color: var(--ink); }
+
+/* breadcrumbs */
+.dl-crumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dl-crumb-wrap { display: inline-flex; align-items: center; gap: 8px; }
+.dl-crumb-sep { color: var(--mute); font-size: 12px; }
+.dl-crumb {
+  font: inherit;
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-size: 13px; cursor: pointer;
+  height: 36px; display: inline-flex; align-items: center;
+  padding: 0 10px; border-radius: 999px;
+  border: none; background: var(--paper); color: var(--ink);
+}
+.dl-crumb:hover { background: #f2f2f2; }
+.dl-crumb-here {
+  cursor: default; color: var(--mute);
+  max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dl-crumb-here:hover { background: var(--paper); }
+
+/* work index */
+.dl-work { max-width: 860px; margin: 0 auto; padding: 30px 22px 110px; }
+.dl-work-title {
+  font-family: 'Compass', 'DEWD Cool Old Sign', serif;
+  font-size: clamp(30px, 6vw, 52px); font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1.08; margin: 0 0 34px;
+}
+.dl-work-list { list-style: none; margin: 0; padding: 0; }
+.dl-work-list li { border-top: 1px solid var(--line); }
+.dl-work-list li:last-child { border-bottom: 1px solid var(--line); }
+.dl-work-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  width: 100%; text-align: left; cursor: pointer;
+  font: inherit; color: var(--ink);
+  background: transparent; border: none;
+  padding: 22px 6px;
+  transition: background .15s;
+}
+.dl-work-item:hover { background: #fafafa; }
+.dl-work-item-title { font-family: 'Compass', 'DEWD Cool Old Sign', serif; font-size: clamp(20px, 3.4vw, 28px); font-weight: 600; letter-spacing: -0.01em; }
+.dl-work-item-title::after { content: " ↗"; font-size: 0.7em; color: var(--mute); }
+.dl-work-item-sub { font-family: 'DEWD Cool Old Sign', monospace; font-size: 12px; color: var(--mute); }
+.dl-work-item-snip { font-size: 14px; color: #555; max-width: 620px; }
+
+/* deeper-dive page */
+.dl-page { min-height: 100vh; }
+.dl-page-top {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 22px;
+}
+.dl-page-tools { display: flex; gap: 8px; }
+.dl-back {
+  font: inherit;
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-size: 13px; cursor: pointer;
+  height: 36px; display: inline-flex; align-items: center;
+  padding: 0 14px; border-radius: 999px;
+  border: 1px solid transparent; background: var(--paper); color: var(--ink);
+}
+.dl-back:hover { background: #f2f2f2; }
+.dl-del-confirm { background: var(--ink); color: var(--paper); }
+.dl-del-confirm:hover { background: #000; }
+.dl-page-body { max-width: 860px; margin: 0 auto; padding: 30px 22px 110px; }
+.dl-page-title {
+  font-family: 'Compass', 'DEWD Cool Old Sign', serif;
+  font-size: clamp(30px, 6vw, 52px); font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1.08; margin: 0 0 10px;
+}
+.dl-page-sub {
+  font-family: 'DEWD Cool Old Sign', monospace; font-size: 13px;
+  color: var(--mute); margin: 0 0 26px;
+}
+.dl-page-text { max-width: 640px; margin: 0 0 16px; color: #333; }
+.dl-page-imgs { margin-top: 38px; display: flex; flex-direction: column; gap: 26px; }
+.dl-page-fig { border-radius: 8px; }
+.dl-page-add { min-height: 140px; margin-top: 26px; font-size: 14px; }
+.dl-page-title-input, .dl-page-sub-input, .dl-page-text-input {
+  display: block; width: 100%;
+  font: inherit; color: var(--ink); background: transparent;
+  border: none; border-bottom: 1px solid var(--line);
+  outline: none; padding: 6px 0; margin-bottom: 14px;
+}
+.dl-page-title-input { font-family: 'Compass', 'DEWD Cool Old Sign', serif; font-size: clamp(26px, 5vw, 40px); font-weight: 600; letter-spacing: -0.02em; }
+.dl-page-sub-input { font-family: 'DEWD Cool Old Sign', monospace; font-size: 13px; color: var(--mute); }
+.dl-page-text-input { font-size: 15px; line-height: 1.6; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.dl-page-title-input:focus, .dl-page-sub-input:focus, .dl-page-text-input:focus { border-color: var(--ink); }
+
+/* drop wash */
+.dl-wash {
+  position: fixed; inset: 0; z-index: 40; pointer-events: none;
+  background: rgba(255,255,255,.92);
+  display: flex; align-items: center; justify-content: center;
+}
+.dl-wash-inner {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  font-size: 18px; font-weight: 500;
+  border: 2px dashed var(--ink); border-radius: 18px;
+  padding: 56px 80px; background: var(--paper);
+}
+.dl-wash-title { font-size: 26px; font-weight: 600; }
+
+/* toast + busy */
+.dl-toast, .dl-busy {
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+  z-index: 50; font-size: 13px;
+  background: var(--ink); color: var(--paper);
+  padding: 9px 18px; border-radius: 999px;
+}
+.dl-busy { bottom: 62px; background: #fff; color: var(--ink); border: 1px solid var(--ink); }
+
+/* modal + shop sheet */
+.dl-modal-veil {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0,0,0,.42);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.dl-modal {
+  position: relative; max-width: 460px; width: 100%;
+  max-height: 86vh; overflow-y: auto;
+  background: var(--paper); border-radius: 16px;
+  padding: 34px 34px 30px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.2);
+}
+.dl-modal h2 { margin: 0 0 12px; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+.dl-modal h3 {
+  margin: 22px 0 4px; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute);
+}
+.dl-modal p { margin: 0 0 10px; color: #444444; }
+.dl-contact a, .dl-pagelist a { color: var(--ink); text-decoration-color: var(--ink); text-underline-offset: 3px; }
+.dl-hint {
+  margin-top: 18px !important; font-size: 11.5px; color: var(--mute) !important;
+  font-family: 'DEWD Cool Old Sign', monospace; letter-spacing: 0.02em;
+}
+.dl-backup-row { display: flex; gap: 10px; margin-top: 4px; }
+.dl-backup-btn {
+  font: inherit;
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif; font-size: 13px; cursor: pointer;
+  padding: 8px 16px; border-radius: 999px;
+  border: 1px solid var(--ink); background: var(--paper); color: var(--ink);
+}
+.dl-backup-btn:hover { background: var(--ink); color: var(--paper); }
+.dl-shopsheet { max-width: 380px; }
+.dl-shopprice { font-family: 'DEWD Cool Old Sign', monospace; font-size: 16px; color: var(--ink) !important; }
+.dl-shopnote { font-size: 13px; color: var(--mute) !important; }
+.dl-buy {
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif;
+  display: inline-flex; align-items: center; margin-top: 8px;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  padding: 10px 20px; border-radius: 999px;
+  background: var(--ink); color: var(--paper); border: none; cursor: pointer;
+}
+.dl-buy:hover { background: #000; }
+.dl-modal-x {
+  position: absolute; top: 12px; right: 14px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: transparent; cursor: pointer;
+  font-size: 20px; color: var(--mute);
+}
+.dl-modal-x:hover { color: var(--ink); }
+
+/* ===== v2: freeform canvas ===== */
+.dl-canvas { position: relative; width: 100%; }
+.dl-item { position: absolute; margin: 0; }
+.dl-item-img {
+  border-radius: 6px; overflow: hidden; background: #f2f2f2;
+  cursor: pointer;
+}
+.dl-canvas-edit .dl-item { cursor: grab; touch-action: none; }
+.dl-item-drag { cursor: grabbing !important; box-shadow: 0 14px 40px rgba(0,0,0,.22); }
+.dl-item-img img { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; }
+.dl-item-img .dl-ph { position: absolute; inset: 0; }
+.dl-item-note { padding: 2px; }
+.dl-note-text {
+  margin: 0; font-size: 15px; line-height: 1.55; color: var(--ink);
+  white-space: pre-wrap;
+}
+.dl-note-flat { break-inside: avoid; margin: 0 0 14px; }
+.dl-note-edit {
+  width: 100%; font: inherit; font-size: 14px; line-height: 1.5; color: var(--ink);
+  border: 1px solid var(--ink); border-radius: 8px; background: var(--paper);
+  padding: 8px; resize: vertical; outline: none;
+}
+.dl-note-actions { top: -30px; right: 0; }
+.dl-addnote {
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif;
+  font-size: 12px; color: var(--mute); background: none; border: none;
+  cursor: pointer; padding: 2px 8px; border-radius: 999px;
+}
+.dl-addnote:hover { color: var(--ink); background: #f2f2f2; }
+
+/* ===== v2: fieldnotes-style hover reveal ===== */
+.dl-hoverbar {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 22px 12px 10px;
+  background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,0));
+  color: #fff;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .18s ease, transform .18s ease;
+  pointer-events: none;
+}
+.dl-item-img:hover .dl-hoverbar, .dl-fig:hover .dl-hoverbar { opacity: 1; transform: translateY(0); }
+@media (hover: none) { .dl-hoverbar { display: none; } }
+.dl-hoverbar-text {
+  font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dl-hoverbar-text em {
+  font-style: normal; font-family: 'DEWD Vintage', sans-serif; opacity: .85; margin-left: 6px;
+}
+.dl-hoverbar-btn {
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif;
+  font-size: 11px; letter-spacing: .04em;
+  background: var(--paper); color: var(--ink);
+  padding: 5px 12px; border-radius: 999px; white-space: nowrap;
+}
+
+/* ===== v2: split-screen detail ===== */
+.dl-split {
+  position: fixed; inset: 0; z-index: 70;
+  display: flex; background: var(--paper);
+}
+.dl-split-img {
+  position: relative; flex: 1 1 62%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 44px; min-width: 0;
+}
+.dl-split-img img {
+  max-width: 100%; max-height: calc(100vh - 88px);
+  object-fit: contain; display: block;
+}
+.dl-split-info {
+  flex: 0 0 340px; max-width: 40%;
+  border-left: 1px solid var(--line);
+  padding: 64px 30px 30px; overflow-y: auto;
+}
+.dl-split-x { position: fixed; top: 14px; right: 16px; z-index: 71; background: var(--paper); }
+.dl-split-date {
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif;
+  font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--mute); margin: 0 0 14px;
+}
+.dl-split-cap { font-size: 16px; line-height: 1.6; margin: 0 0 18px; }
+.dl-split-capedit {
+  width: 100%; font: inherit; font-size: 15px; line-height: 1.55; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 8px; background: var(--paper);
+  padding: 8px; resize: vertical; outline: none; margin-bottom: 18px;
+}
+.dl-split-capedit:focus { border-color: var(--ink); }
+.dl-split-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+.dl-split-tags .dl-minitag { background: #f2f2f2; }
+.dl-split-block { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 4px; margin-bottom: 18px; }
+.dl-split-label {
+  font-family: 'DEWD Vintage', 'DEWD Cool Old Sign', sans-serif;
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--mute); margin: 0 0 8px;
+}
+.dl-split-prodname { font-size: 16px; margin: 0 0 2px; }
+.dl-split-pagelink {
+  font-family: 'Compass', 'DEWD Cool Old Sign', serif;
+  font-size: 20px; color: var(--ink); background: none; border: none;
+  padding: 0; cursor: pointer; text-align: left;
+}
+.dl-split-pagelink:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 700px) {
+  .dl-split { flex-direction: column; overflow-y: auto; }
+  .dl-split-img { flex: none; padding: 54px 16px 10px; }
+  .dl-split-img img { max-height: 60vh; }
+  .dl-split-info { flex: none; max-width: none; border-left: none; border-top: 1px solid var(--line); padding: 22px 20px 60px; }
+}
+
+/* ===== v2: login modal ===== */
+.dl-login { max-width: 340px; }
+.dl-login-input {
+  display: block; width: 100%;
+  font: inherit; font-size: 15px; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 10px;
+  padding: 11px 12px; margin: 14px 0 12px; outline: none; background: var(--paper);
+}
+.dl-login-input:focus { border-color: var(--ink); }
+.dl-login-btn { width: 100%; justify-content: center; }
+
+
+/* login modal */
+.dl-login-err { color: var(--ink); font-size: 13px; margin: 0 0 8px; }
