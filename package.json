@@ -1,0 +1,25 @@
+{
+  "name": "daylog",
+  "private": true,
+  "version": "3.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
+  },
+  "description": "One canvas per day. Drag images onto the page and they land on today's canvas; days stack into one continuous scroll. Arrange images and floating notes freely (invisible-grid snap), click any image for a split-screen detail view, tag things, link deeper-dive project pages, and sell through Fourthwall.",
+  "main": "vite.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
