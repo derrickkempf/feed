@@ -839,7 +839,7 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
 
         <div className="dl-page-imgs">
           {page.images.map((m) => (
-            <figure key={m.id} className="dl-fig dl-page-fig" style={{ aspectRatio: `${m.w} / ${m.h}` }}>
+            <figure key={m.id} className="dl-fig dl-page-fig" style={{ aspectRatio: `${m.w} / ${m.h}`, width: `min(100%, calc(76vh * ${(m.w / m.h).toFixed(4)}))` }}>
               <img src={m.url} alt="" loading="lazy" draggable={false} />
               {edit && (
                 <div className="dl-fig-actions" style={{ opacity: 1 }}>
@@ -1391,11 +1391,12 @@ export default function App() {
     return (
       <div className="dl-root">
         {route.kind === "work" ? (
-          <WorkIndex pages={pages} onOpen={openPageHash} />
+          <WorkIndex key="work" pages={pages} onOpen={openPageHash} />
         ) : route.kind === "about" ? (
-          <AboutPage canEdit={canEdit} pages={pages} onOpenPage={openPageHash} />
+          <AboutPage key="about" canEdit={canEdit} pages={pages} onOpenPage={openPageHash} />
         ) : (
           <PageView
+            key={`p-${route.slug}`}
             slug={route.slug}
             pages={pages}
             canEdit={canEdit}

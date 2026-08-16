@@ -3,7 +3,22 @@
 // The storefront token (ptkn_...) is a public, read-only catalog token.
 
 const TOKEN = import.meta.env.VITE_FW_STOREFRONT_TOKEN;
-const CHECKOUT_DOMAIN = import.meta.env.VITE_FW_CHECKOUT_DOMAIN; // e.g. my-shop.fourthwall.com
+
+// Accepts "dewd.cool", "https://dewd.cool/", "dewd.cool//" … and normalizes
+// to a bare domain so built URLs never double the scheme or slashes.
+const CHECKOUT_DOMAIN = String(import.meta.env.VITE_FW_CHECKOUT_DOMAIN || "")
+  .trim()
+  .replace(/^(https?[:/]+)+/i, "")
+  .replace(/\/+$/, "");
+
+// Heals malformed URLs (e.g. "https://https//x//products/y"), including any
+// already saved on products in the database.
+export function cleanUrl(u) {
+  if (!u) return u;
+  let rest = String(u).trim().replace(/^(https?[:/]+)+/i, "");
+  rest = rest.replace(/\/{2,}/g, "/");
+  return rest ? `https://${rest}` : null;
+}
 const API = "https://storefront-api.fourthwall.com/v1";
 
 export const fourthwallEnabled = () => Boolean(TOKEN);
@@ -26,7 +41,7 @@ export async function getAllProducts() {
     name: p.name,
     price: formatPrice(p),
     variantId: p.variants?.[0]?.id || null,
-    url: CHECKOUT_DOMAIN ? `https://${CHECKOUT_DOMAIN}/products/${p.slug}` : null,
+    url: CHECKOUT_DOMAIN ? cleanUrl(`${CHECKOUT_DOMAIN}/products/${p.slug}`) : null,
   }));
 }
 
@@ -54,9 +69,9 @@ export async function checkoutUrl(product) {
       });
       if (res.ok) {
         const cart = await res.json();
-        if (cart?.id) return `https://${CHECKOUT_DOMAIN}/checkout/?cartCurrency=USD&cartToken=${cart.id}`;
+        if (cart?.id) return cleanUrl(`${CHECKOUT_DOMAIN}/checkout/?cartCurrency=USD&cartToken=${cart.id}`);
       }
     } catch {}
   }
-  return product.url || null;
+  return cleanUrl(product.url) || null;
 }

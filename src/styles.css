@@ -352,7 +352,7 @@ html { scroll-behavior: smooth; }
 }
 .dl-page-sub { font-family: var(--type); font-size: 13px; color: var(--mute); margin: 0 0 26px; }
 .dl-page-text { font-family: var(--type); max-width: 66ch; margin: 0 0 16px; color: #222; }
-.dl-page-imgs { margin-top: 38px; display: flex; flex-direction: column; gap: 26px; }
+.dl-page-imgs { margin-top: 38px; display: flex; flex-direction: column; gap: 30px; }
 .dl-page-fig { cursor: default; }
 .dl-page-add { min-height: 140px; margin-top: 26px; font-size: 14px; }
 .dl-page-title-input, .dl-page-sub-input, .dl-page-text-input {
@@ -430,6 +430,32 @@ html { scroll-behavior: smooth; }
   .dl-split-img { flex: none; padding: 54px 16px 10px; }
   .dl-split-img img { max-height: 60vh; }
   .dl-split-info { flex: none; max-width: none; border-left: none; border-top: 1px solid var(--line); padding: 22px 20px 60px; }
+}
+
+
+/* ===== view transitions (batz-style: quiet fades, staggered reveals) ===== */
+.dl-scroll, .dl-page { animation: dl-view .45s ease both; }
+.dl-hero { animation: dl-view .6s ease both; }
+.dl-page-title, .dl-work-title { animation: dl-view .5s ease both; }
+.dl-page-sub { animation: dl-view .5s .07s ease both; }
+.dl-page-text, .dl-about-text { animation: dl-view .55s .14s ease both; }
+.dl-page-imgs, .dl-about-img { animation: dl-view .6s .2s ease both; }
+.dl-work-grid .dl-work-card { animation: dl-view .5s ease both; }
+.dl-work-grid .dl-work-card:nth-child(2) { animation-delay: .07s; }
+.dl-work-grid .dl-work-card:nth-child(3) { animation-delay: .14s; }
+.dl-work-grid .dl-work-card:nth-child(4) { animation-delay: .21s; }
+.dl-work-grid .dl-work-card:nth-child(5) { animation-delay: .28s; }
+.dl-work-grid .dl-work-card:nth-child(n+6) { animation-delay: .34s; }
+@keyframes dl-view { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.dl-split { animation: dl-fade .3s ease both; }
+.dl-split-img img { animation: dl-settle .45s ease both; }
+.dl-split-info { animation: dl-view .45s .08s ease both; }
+@keyframes dl-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dl-settle { from { opacity: 0; transform: scale(.985); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .dl-scroll, .dl-page, .dl-hero, .dl-page-title, .dl-work-title, .dl-page-sub,
+  .dl-page-text, .dl-about-text, .dl-page-imgs, .dl-about-img,
+  .dl-work-grid .dl-work-card, .dl-split, .dl-split-img img, .dl-split-info { animation: none; }
 }
 
 /* ===== drop wash / toasts ===== */
