@@ -304,12 +304,11 @@ html { scroll-behavior: smooth; }
 /* ===== work index ===== */
 .dl-page { min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
 .dl-page-top {
-  position: sticky; top: 0; z-index: 30; background: transparent; pointer-events: none;
   display: flex; justify-content: space-between; align-items: center;
-  padding: 22px 48px 16px;
+  padding: 6px 48px 18px;
 }
+@media (max-width: 700px) { .dl-page-top { padding: 6px 24px 16px; } }
 .dl-page-tools { display: flex; gap: 8px; }
-.dl-page-top > * { pointer-events: auto; }
 .dl-back {
   font-family: var(--sign); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
   cursor: pointer; padding: 8px 14px; border-radius: 999px;
@@ -353,7 +352,8 @@ html { scroll-behavior: smooth; }
 .dl-page-sub { font-family: var(--type); font-size: 13px; color: var(--mute); margin: 0 0 26px; }
 .dl-page-text { font-family: var(--type); max-width: 66ch; margin: 0 0 16px; color: #222; }
 .dl-page-imgs { margin-top: 38px; display: flex; flex-direction: column; gap: 30px; }
-.dl-page-fig { cursor: default; }
+.dl-page-fig { cursor: default; overflow: hidden; max-width: 100%; }
+.dl-page-fig img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dl-page-add { min-height: 140px; margin-top: 26px; font-size: 14px; }
 .dl-page-title-input, .dl-page-sub-input, .dl-page-text-input {
   display: block; width: 100%; font-family: var(--type); color: var(--ink); background: transparent;

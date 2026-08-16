@@ -1385,11 +1385,26 @@ export default function App() {
     }
   };
 
+  const siteHeader = (
+    <header className="dl-top">
+      <div className="dl-toprow">
+        <span className="dl-mark" onClick={markTap}>{SITE_NAME}</span>
+        <span className="dl-tagline">{SITE_TAGLINE}</span>
+        <nav className="dl-topright">
+          {canEdit && !route && <button className="dl-add" onClick={pick}>+ Add</button>}
+          <button className="dl-navlink" onClick={openWorkHash}>Works</button>
+          <button className="dl-navlink" onClick={openAboutHash}>About</button>
+        </nav>
+      </div>
+    </header>
+  );
+
   const detailMeta = detail && days ? days.find((d) => d.date === detail.date)?.images.find((m) => m.id === detail.id) : null;
 
   if (route) {
     return (
       <div className="dl-root">
+        {siteHeader}
         {route.kind === "work" ? (
           <WorkIndex key="work" pages={pages} onOpen={openPageHash} />
         ) : route.kind === "about" ? (
@@ -1417,17 +1432,7 @@ export default function App() {
     <div className="dl-root">
       <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
 
-      <header className="dl-top">
-        <div className="dl-toprow">
-          <span className="dl-mark" onClick={markTap}>{SITE_NAME}</span>
-          <span className="dl-tagline">{SITE_TAGLINE}</span>
-          <nav className="dl-topright">
-            {canEdit && <button className="dl-add" onClick={pick}>+ Add</button>}
-            <button className="dl-navlink" onClick={openWorkHash}>Works</button>
-            <button className="dl-navlink" onClick={openAboutHash}>About</button>
-          </nav>
-        </div>
-      </header>
+      {siteHeader}
 
       <h1 className="dl-hero">
         {SITE_HERO[0]}
