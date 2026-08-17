@@ -59,7 +59,6 @@ html { scroll-behavior: smooth; }
   text-transform: uppercase; cursor: pointer; user-select: none;
   background: none; border: none; padding: 0; color: var(--ink);
 }
-.dl-mark:hover { text-decoration: underline; text-underline-offset: 5px; }
 .dl-tagline {
   position: absolute; left: 50%; transform: translateX(-50%);
   font-family: var(--type); font-size: 10.5px; letter-spacing: 0.08em;
@@ -72,7 +71,6 @@ html { scroll-behavior: smooth; }
   text-transform: uppercase; color: var(--ink);
   background: none; border: none; padding: 4px 0; cursor: pointer;
 }
-.dl-navlink:hover { text-decoration: underline; text-underline-offset: 5px; }
 .dl-add {
   font-family: var(--sign); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
   cursor: pointer; padding: 8px 14px; border-radius: 999px;
@@ -123,8 +121,7 @@ html { scroll-behavior: smooth; }
 .dl-chip button { border: none; background: transparent; color: inherit; cursor: pointer; font-size: 13px; line-height: 1; padding: 0; }
 .dl-clear {
   font-family: var(--type); font-size: 12px; cursor: pointer; white-space: nowrap;
-  background: none; border: none; color: var(--mute);
-  text-decoration: underline; text-underline-offset: 3px;
+  border: none; color: var(--mute); background: none;
 }
 .dl-clear:hover { color: var(--ink); }
 .dl-filternote { font-family: var(--type); font-size: 13px; color: var(--mute); margin: 0 0 26px; }
@@ -357,9 +354,8 @@ html { scroll-behavior: smooth; }
 .dl-work-card-snip { font-family: var(--type); font-size: 13.5px; line-height: 1.6; color: #333; }
 .dl-work-card-more {
   font-family: var(--sign); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
-  border-bottom: 2px solid var(--ink); padding-bottom: 2px; margin-top: 2px;
+  padding-bottom: 2px; margin-top: 2px;
 }
-.dl-work-card:hover .dl-work-card-title { text-decoration: underline; text-underline-offset: 5px; }
 
 /* ===== deeper-dive page ===== */
 .dl-page-body { flex: 1; width: 100%; max-width: 980px; margin: 0 auto; padding: 24px 48px 150px; }
@@ -391,9 +387,9 @@ html { scroll-behavior: smooth; }
 .dl-about-text { font-family: var(--type); font-size: 15px; line-height: 1.75; max-width: 62ch; padding-top: 40px; }
 .dl-about-text p { margin: 0 0 22px; }
 .dl-about-hello { font-style: italic; }
-.dl-about-mail { color: var(--ink); text-decoration-color: var(--ink); text-underline-offset: 3px; }
+.dl-about-mail { color: var(--ink); }
 .dl-about-owner { border-top: 1px solid var(--line); margin-top: 40px; padding-top: 24px; }
-.dl-pagelist a { color: var(--ink); text-decoration-color: var(--ink); text-underline-offset: 3px; }
+.dl-pagelist a { color: var(--ink); }
 
 /* ===== footer ===== */
 .dl-footer {
@@ -409,7 +405,6 @@ html { scroll-behavior: smooth; }
   font-family: var(--sign); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ink); text-decoration: none;
 }
-.dl-footer-links a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
 /* ===== split-screen detail ===== */
 .dl-split { position: fixed; inset: 0; z-index: 70; display: flex; background: var(--paper); }
@@ -435,7 +430,6 @@ html { scroll-behavior: smooth; }
   font-family: var(--head); text-transform: uppercase; font-size: 20px; color: var(--ink);
   background: none; border: none; padding: 0; cursor: pointer; text-align: left;
 }
-.dl-split-pagelink:hover { text-decoration: underline; text-underline-offset: 4px; }
 .dl-buy {
   display: inline-flex; align-items: center; margin-top: 4px;
   font-family: var(--sign); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
@@ -501,12 +495,11 @@ html { scroll-behavior: smooth; }
 .dl-postcard-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dl-postcard-title { font-family: var(--head); font-size: 20px; line-height: 1.1; text-transform: uppercase; }
 .dl-postcard-sub { font-family: var(--type); font-size: 12px; color: var(--mute); }
-.dl-postcard:hover .dl-postcard-title { text-decoration: underline; text-underline-offset: 4px; }
 .dl-snipimg { position: relative; display: block; width: 100%; background: var(--block); overflow: hidden; }
 .dl-snipimg img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dl-snipimg .dl-itemcap { position: static; display: block; }
 .dl-mutetext { color: var(--mute); }
-.dl-note-text a, .dl-quote a, .dl-page-text a { color: var(--ink); text-underline-offset: 3px; }
+.dl-note-text a, .dl-quote a, .dl-page-text a { color: var(--ink); }
 .dl-blockedit { display: flex; flex-direction: column; gap: 8px; }
 .dl-blockedit textarea, .dl-blockedit input, .dl-blockedit select {
   width: 100%; font-family: var(--type); font-size: 14px; line-height: 1.6; color: var(--ink);
@@ -568,6 +561,50 @@ html { scroll-behavior: smooth; }
 }
 .dl-imgrow-upload:hover { background: var(--ink); color: var(--paper); }
 .dl-imgrow-upload:disabled { opacity: .5; cursor: default; }
+
+
+/* ===== animated underlines ===== */
+/* hover links: line grows in from the left */
+.dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink,
+.dl-work-card-title, .dl-postcard-title {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0% 100%;
+  background-size: 0% 1.5px;
+  transition: background-size .3s ease;
+}
+.dl-navlink:hover, .dl-navlink:focus-visible,
+.dl-mark:hover, .dl-mark:focus-visible,
+.dl-footer-links a:hover, .dl-footer-links a:focus-visible,
+.dl-split-pagelink:hover, .dl-split-pagelink:focus-visible,
+.dl-work-card:hover .dl-work-card-title,
+.dl-postcard:hover .dl-postcard-title {
+  background-size: 100% 1.5px;
+}
+
+/* always-underlined links: line wipes away to the right on hover */
+.dl-clear, .dl-about-mail, .dl-pagelist a, .dl-work-card-more,
+.dl-note-text a, .dl-quote a, .dl-page-text a {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 100% 100%;
+  background-size: 100% 1.5px;
+  transition: background-size .3s ease;
+  padding-bottom: 1px;
+}
+.dl-clear:hover, .dl-about-mail:hover, .dl-pagelist a:hover,
+.dl-work-card:hover .dl-work-card-more,
+.dl-note-text a:hover, .dl-quote a:hover, .dl-page-text a:hover {
+  background-size: 0% 1.5px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink,
+  .dl-work-card-title, .dl-postcard-title,
+  .dl-clear, .dl-about-mail, .dl-pagelist a, .dl-work-card-more,
+  .dl-note-text a, .dl-quote a, .dl-page-text a { transition: none; }
+}
 
 /* ===== drop wash / toasts ===== */
 .dl-wash { position: fixed; inset: 0; z-index: 40; pointer-events: none; background: rgba(249,249,249,.93); display: flex; align-items: center; justify-content: center; }
