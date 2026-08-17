@@ -417,7 +417,7 @@ html { scroll-behavior: smooth; }
 .dl-about-text p { margin: 0 0 22px; }
 .dl-about-text p:first-of-type { font-style: italic; }
 .dl-about-mail { color: var(--ink); }
-.dl-about-owner { border-top: 1px solid var(--line); margin-top: 40px; padding-top: 24px; }
+.dl-about-owner { margin-top: 40px; padding-top: 0; }
 .dl-pagelist a { color: var(--ink); }
 
 /* ===== footer ===== */

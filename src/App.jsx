@@ -1155,13 +1155,10 @@ function AboutPage({ canEdit, pages, aboutPage, onSaveAbout, onOpenPage, onUploa
     "Hello!\n\nI'm Derrick Kempf, an artist and brand identity designer with over two decades of experience shaping brands and translating vision into meaningful design. I bring a balance of discipline and creative freedom to both brand consulting and personal art, and I am dedicated to helping fellow artists find simplicity and joy in the creative process. I love drawing and the subjects I illustrate typically consist of weird, balding men, or Dewds, as I call them. See more of them out at dewd.cool.\n\nLet's make something cool together.\n\n[Email me](mailto:hello@derrickkempf.com) or connect with me on socials.";
   const [editingAbout, setEditingAbout] = useState(false);
   const [draft, setDraft] = useState(aboutPage?.body || DEFAULT_BIO);
-  const [labelDraft, setLabelDraft] = useState(aboutPage?.subtitle || "Pages");
   useEffect(() => {
     setDraft(aboutPage?.body || DEFAULT_BIO);
-    setLabelDraft(aboutPage?.subtitle || "Pages");
-  }, [aboutPage?.body, aboutPage?.subtitle]);
+  }, [aboutPage?.body]);
   const body = aboutPage?.body || DEFAULT_BIO;
-  const pagesLabel = aboutPage?.subtitle || "Pages";
   const photo = aboutPage?.images?.[0];
   const photoRef = useRef(null);
   return (
@@ -1199,13 +1196,9 @@ function AboutPage({ canEdit, pages, aboutPage, onSaveAbout, onOpenPage, onUploa
             {canEdit && editingAbout ? (
               <>
                 <MdArea className="dl-page-text-input" value={draft} rows={9} allowBlocks onChange={setDraft} />
-                <label className="dl-about-labelfield">
-                  Section label (below)
-                  <input value={labelDraft} placeholder="Pages" onChange={(e) => setLabelDraft(e.target.value)} />
-                </label>
                 <p className="dl-prodedit-row">
-                  <button className="dl-prodedit-save" onClick={() => { onSaveAbout(draft, labelDraft); setEditingAbout(false); }}>Save</button>
-                  <button className="dl-back" onClick={() => { setDraft(body); setLabelDraft(pagesLabel); setEditingAbout(false); }}>Cancel</button>
+                  <button className="dl-prodedit-save" onClick={() => { onSaveAbout(draft); setEditingAbout(false); }}>Save</button>
+                  <button className="dl-back" onClick={() => { setDraft(body); setEditingAbout(false); }}>Cancel</button>
                 </p>
               </>
             ) : (
@@ -1217,19 +1210,6 @@ function AboutPage({ canEdit, pages, aboutPage, onSaveAbout, onOpenPage, onUploa
                   <p>
                     <button className="dl-back" onClick={() => setEditingAbout(true)}>Edit this page</button>
                   </p>
-                )}
-                <p className="dl-split-label">{pagesLabel}</p>
-                {pages.length ? (
-                  <p className="dl-pagelist">
-                    {pages.map((p, i) => (
-                      <span key={p.slug}>
-                        {i > 0 && " · "}
-                        <a href={`#/p/${p.slug}`} onClick={(e) => { e.preventDefault(); onOpenPage(p.slug); }}>{p.title}</a>
-                      </span>
-                    ))}
-                  </p>
-                ) : (
-                  <p>No pages yet — hover an image in the feed and hit ↗.</p>
                 )}
                 <p className="dl-hint">Log in/out: ⌘/Ctrl+Shift+L · tap the wordmark 5× · or visit #login</p>
               </div>
