@@ -384,8 +384,7 @@ html { scroll-behavior: smooth; }
 .dl-slider {
   display: flex; gap: 14px; overflow-x: auto;
   scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-  width: 100vw; margin-left: 50%; transform: translateX(-50%);
-  padding: 0 40px 8px; scrollbar-width: none;
+  width: 100%; padding: 0 40px 8px; scrollbar-width: none;
 }
 .dl-slider::-webkit-scrollbar { display: none; }
 .dl-slider .dl-page-fig { flex: 0 0 auto; height: min(62vh, 560px); margin: 0; scroll-snap-align: center; }
@@ -681,7 +680,7 @@ html { scroll-behavior: smooth; }
 .dl-pull p { font-size: 17px; }
 .dl-pull.dl-quote-big p { font-size: clamp(18px, 2.2vw, 24px); }
 .dl-page-h2, .dl-page-h3, .dl-page-h4, .dl-page-h5,
-.dl-imgw-wide, .dl-imgw-full, .dl-gal, .dl-slider, .dl-page-imgs { clear: both; }
+.dl-imgw-wide, .dl-imgw-full, .dl-gal, .dl-slider-wrap, .dl-page-imgs { clear: both; }
 .dl-imgnum {
   position: absolute; bottom: 8px; left: 8px; z-index: 3;
   min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
@@ -695,7 +694,7 @@ html { scroll-behavior: smooth; }
 
 
 /* slider nav arrows */
-.dl-slider-wrap { position: relative; }
+.dl-slider-wrap { position: relative; width: 100vw; margin-left: 50%; transform: translateX(-50%); }
 .dl-slider-arrow {
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
   width: 44px; height: 44px; border-radius: 0; border: none;
