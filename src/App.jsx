@@ -923,7 +923,7 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets,
 
   const flat = filterOn || isMobile;
   const layout = useMemo(() => {
-    const base = resolveLayout(day, width < 860 ? 2 : 3);
+    const base = resolveLayout(day, width < 860 ? 2 : 6);
     const out = new Map();
     for (const [id, p] of base) out.set(id, { ...p, top: (p.fy / 100) * (width || 1) });
     return out;
