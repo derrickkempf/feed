@@ -1,4 +1,4 @@
-# Daylog — a daily record of what I'm making
+# Feed — a daily record of what I'm making
 
 One canvas per day. Drag images onto the page and they land on today's canvas;
 days stack into one continuous scroll. Arrange images and floating notes
@@ -31,7 +31,7 @@ log in with the passphrase from `.env` (copy `.env.example`).
 ## Supabase setup (once)
 1. Create a project → SQL Editor → run `supabase.sql`
    (already ran an older version? run `migrate-v2.sql` instead).
-2. Storage → New bucket → name `daylog` → **Public** →
+2. Storage → New bucket → name `daylog` (keep this exact name — the code expects it) → **Public** →
    policies: INSERT/UPDATE/DELETE for `authenticated`.
 3. Authentication → Users → Add user (your email + password),
    then Providers → Email → disable new sign-ups.

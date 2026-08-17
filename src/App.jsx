@@ -3,7 +3,7 @@ import * as be from "./backend.js";
 import { fourthwallEnabled, getAllProducts, checkoutUrl } from "./fourthwall.js";
 
 /*
-  DAYLOG v2 — deployed version.
+  FEED — deployed version.
   · Freeform day canvases: drag images & notes, invisible-grid snap, ⤢ sizes.
   · Split-screen detail on click (image left, info right).
   · Hover reveals product/caption info (fieldnotes-style).
@@ -1448,7 +1448,7 @@ export default function App() {
       try {
         if (localStorage.getItem("dl-session") === "owner") setMode("owner");
       } catch {}
-      console.info("Daylog: LOCAL PREVIEW mode (browser storage). Set the Supabase env vars for the real archive.");
+      console.info("Feed: LOCAL PREVIEW mode (browser storage). Set the Supabase env vars for the real archive.");
     } else {
       be.hasSession().then((ok) => ok && setMode("owner"));
     }
@@ -2085,7 +2085,12 @@ export default function App() {
             />
           ))
         )}
-        {viewDays && viewDays.length > 0 && !filterOn && <p className="dl-end">— beginning of the scroll —</p>}
+        {viewDays && viewDays.length > 0 && !filterOn && (
+          <>
+            <p className="dl-end">— beginning of the scroll —</p>
+            <img className="dl-endmark" src="/feed-footer.svg" alt="Feed" loading="lazy" />
+          </>
+        )}
       </main>
 
       {dragging && (
