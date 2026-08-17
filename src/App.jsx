@@ -440,7 +440,7 @@ function PageLinkEditor({ meta, pages, onLink, onCreateAndLink, onClose }) {
 }
 
 // ---------- canvas items ----------
-function CanvasImg({ meta, pos, canEdit, drag, resizing, onDragStart, onResizeStart, onOpen, onCycleSize, onEdit, onDelete, editorOpen, editors }) {
+function CanvasImg({ meta, pos, canEdit, drag, resizing, onDragStart, onResizeStart, onOpen, onCycleSize, onSnip, onEdit, onDelete, editorOpen, editors }) {
   const isDragging = (drag && drag.id === meta.id) || resizing;
   const style = {
     left: `${pos.fx}%`,
@@ -484,6 +484,7 @@ function CanvasImg({ meta, pos, canEdit, drag, resizing, onDragStart, onResizeSt
       {canEdit && !editorOpen && (
         <div className="dl-fig-actions" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
           <button className="dl-act" title="Cycle size" aria-label="Cycle size" onClick={() => onCycleSize(meta.id)}>⤢</button>
+          <button className="dl-act" title="Save as reusable card" aria-label="Save as reusable card" onClick={() => onSnip(meta)}>☆</button>
           <button className={`dl-act ${meta.page ? "dl-act-on" : ""}`} title="Link a page" aria-label="Link a page" onClick={() => onEdit({ id: meta.id, kind: "page" })}>↗</button>
           <button className={`dl-act ${meta.product ? "dl-act-on" : ""}`} title="Link product" aria-label="Link product" onClick={() => onEdit({ id: meta.id, kind: "product" })}>$</button>
           <button className="dl-act" title="Edit tags" aria-label="Edit tags" onClick={() => onEdit({ id: meta.id, kind: "tags" })}>#</button>
@@ -495,9 +496,184 @@ function CanvasImg({ meta, pos, canEdit, drag, resizing, onDragStart, onResizeSt
   );
 }
 
-function CanvasNote({ note, pos, canEdit, drag, onDragStart, onEditText, onDelete }) {
+// ---------- rich blocks ----------
+// tiny inline markdown: **bold** · *italic* · [label](https://url)
+function mdInline(text) {
+  const out = [];
+  let rest = String(text || "");
+  let k = 0;
+  const rx = /(\*\*([^*]+)\*\*)|(\*([^*]+)\*)|(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\))/;
+  while (rest) {
+    const m = rest.match(rx);
+    if (!m) {
+      out.push(rest);
+      break;
+    }
+    if (m.index > 0) out.push(rest.slice(0, m.index));
+    if (m[2]) out.push(<strong key={k++}>{m[2]}</strong>);
+    else if (m[4]) out.push(<em key={k++}>{m[4]}</em>);
+    else out.push(<a key={k++} href={m[7]} target="_blank" rel="noopener noreferrer">{m[6]}</a>);
+    rest = rest.slice(m.index + m[0].length);
+  }
+  return out;
+}
+
+// blog-flavored body: blank line = paragraph · "## " heading · "> " quote
+function renderBody(body) {
+  return (body || "")
+    .split(/\n\s*\n/)
+    .filter(Boolean)
+    .map((para, i) => {
+      if (para.startsWith("## ")) return <h2 className="dl-page-h2" key={i}>{mdInline(para.slice(3))}</h2>;
+      if (para.startsWith("> "))
+        return (
+          <blockquote className="dl-quote" key={i}>
+            <p>{mdInline(para.replace(/^> ?/gm, ""))}</p>
+          </blockquote>
+        );
+      return <p className="dl-page-text" key={i}>{mdInline(para)}</p>;
+    });
+}
+
+function videoEmbed(url) {
+  const yt = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  const vm = String(url || "").match(/vimeo\.com\/(\d+)/);
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+  return null;
+}
+
+function LinkCard({ data }) {
+  const url = data?.url || "";
+  let host = "";
+  try {
+    host = new URL(url).hostname.replace(/^www\./, "");
+  } catch {}
+  return (
+    <a className="dl-linkcard" href={url || "#"} target="_blank" rel="noopener noreferrer" onClick={(e) => !url && e.preventDefault()}>
+      <span className="dl-linkcard-label">{data?.label || url || "Add a link…"}</span>
+      {host && <span className="dl-linkcard-host">{host} ↗</span>}
+    </a>
+  );
+}
+
+function VideoBlock({ data }) {
+  const src = videoEmbed(data?.url);
+  if (!src) return <p className="dl-note-text dl-mutetext">{data?.url || "Add a YouTube or Vimeo URL…"}</p>;
+  return (
+    <span className="dl-videobox">
+      <iframe src={src} title="Embedded video" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+    </span>
+  );
+}
+
+function PostCardBlock({ data, pages, onOpenPage }) {
+  const p = pages.find((x) => x.slug === data?.slug);
+  if (!p) return <p className="dl-note-text dl-mutetext">Pick a post…</p>;
+  return (
+    <button className="dl-postcard" onClick={() => onOpenPage(p.slug)}>
+      {p.images[0] && (
+        <span className="dl-postcard-cover" style={{ aspectRatio: `${p.images[0].w} / ${p.images[0].h}` }}>
+          <img src={p.images[0].url} alt="" loading="lazy" />
+        </span>
+      )}
+      <span className="dl-postcard-title">{p.title}</span>
+      {p.subtitle && <span className="dl-postcard-sub">{p.subtitle}</span>}
+      <span className="dl-work-card-more">Read more</span>
+    </button>
+  );
+}
+
+function SnippetImg({ data }) {
+  return (
+    <span className="dl-snipimg" style={{ aspectRatio: `${data.w} / ${data.h}` }}>
+      <img src={data.url} alt={data.cap || ""} loading="lazy" />
+      {data.cap && <span className="dl-itemcap">{data.cap}</span>}
+    </span>
+  );
+}
+
+function SnippetView({ snippet, pages, onOpenPage }) {
+  if (!snippet) return <p className="dl-note-text dl-mutetext">This card was deleted.</p>;
+  if (snippet.kind === "image") return <SnippetImg data={snippet.data} />;
+  if (snippet.kind === "quote")
+    return (
+      <blockquote className="dl-quote">
+        <p>{mdInline(snippet.data.text)}</p>
+        {snippet.data.cite && <cite>— {snippet.data.cite}</cite>}
+      </blockquote>
+    );
+  if (snippet.kind === "link") return <LinkCard data={snippet.data} />;
+  if (snippet.kind === "video") return <VideoBlock data={snippet.data} />;
+  if (snippet.kind === "post") return <PostCardBlock data={snippet.data} pages={pages} onOpenPage={onOpenPage} />;
+  return <p className="dl-note-text">{mdInline(snippet.data.text)}</p>;
+}
+
+function BlockBody({ note, pages, snippets, onOpenPage }) {
+  const kind = note.kind || "text";
+  const data = note.data || {};
+  if (kind === "quote")
+    return (
+      <blockquote className="dl-quote">
+        <p>{mdInline(note.text)}</p>
+        {data.cite && <cite>— {data.cite}</cite>}
+      </blockquote>
+    );
+  if (kind === "link") return <LinkCard data={data} />;
+  if (kind === "video") return <VideoBlock data={data} />;
+  if (kind === "post") return <PostCardBlock data={data} pages={pages} onOpenPage={onOpenPage} />;
+  if (kind === "card") return <SnippetView snippet={snippets.find((x) => x.id === data.snippetId)} pages={pages} onOpenPage={onOpenPage} />;
+  return <p className="dl-note-text">{mdInline(note.text)}</p>;
+}
+
+function BlockEditor({ note, pages, snippets, onSave, onClose }) {
+  const kind = note.kind || "text";
+  const [text, setText] = useState(note.text || "");
+  const [cite, setCite] = useState(note.data?.cite || "");
+  const [url, setUrl] = useState(note.data?.url || "");
+  const [label, setLabel] = useState(note.data?.label || "");
+  const [slug, setSlug] = useState(note.data?.slug || "");
+  const [snippetId, setSnippetId] = useState(note.data?.snippetId || "");
+  const save = () => {
+    if (kind === "quote") onSave(note.id, { text, data: { cite: cite.trim() } });
+    else if (kind === "link") onSave(note.id, { text: "", data: { url: url.trim(), label: label.trim() } });
+    else if (kind === "video") onSave(note.id, { text: "", data: { url: url.trim() } });
+    else if (kind === "post") onSave(note.id, { text: "", data: { slug } });
+    else if (kind === "card") onSave(note.id, { text: "", data: { snippetId } });
+    else onSave(note.id, { text, data: null });
+    onClose();
+  };
+  return (
+    <div className="dl-blockedit" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+      {(kind === "text" || kind === "quote") && (
+        <textarea autoFocus rows={3} value={text} placeholder={kind === "quote" ? "Quote… (**bold**, *italic*, [links](url))" : "Write… (**bold**, *italic*, [links](url))"} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Escape" && onClose()} />
+      )}
+      {kind === "quote" && <input value={cite} placeholder="Attribution (optional)" onChange={(e) => setCite(e.target.value)} />}
+      {(kind === "link" || kind === "video") && (
+        <input autoFocus={kind === "video"} value={url} placeholder={kind === "video" ? "YouTube or Vimeo URL" : "https://…"} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} />
+      )}
+      {kind === "link" && <input autoFocus value={label} placeholder="Label" onChange={(e) => setLabel(e.target.value)} />}
+      {kind === "post" && (
+        <select autoFocus value={slug} onChange={(e) => setSlug(e.target.value)}>
+          <option value="" disabled>Pick a post…</option>
+          {pages.map((p) => <option key={p.slug} value={p.slug}>{p.title}</option>)}
+        </select>
+      )}
+      {kind === "card" && (
+        <select autoFocus value={snippetId} onChange={(e) => setSnippetId(e.target.value)}>
+          <option value="" disabled>Pick a saved card…</option>
+          {snippets.map((sn) => <option key={sn.id} value={sn.id}>{sn.name}</option>)}
+        </select>
+      )}
+      <div className="dl-prodedit-row">
+        <button className="dl-prodedit-save" onClick={save}>Save</button>
+      </div>
+    </div>
+  );
+}
+
+function CanvasBlock({ note, pos, canEdit, drag, pages, snippets, onOpenPage, onDragStart, onPatchBlock, onSnip, onDelete }) {
   const [editingText, setEditingText] = useState(false);
-  const [draft, setDraft] = useState(note.text);
   const isDragging = drag && drag.id === note.id;
   const style = {
     left: `${pos.fx}%`,
@@ -506,6 +682,7 @@ function CanvasNote({ note, pos, canEdit, drag, onDragStart, onEditText, onDelet
     transform: isDragging ? `translate(${drag.dx}px, ${drag.dy}px)` : undefined,
     zIndex: isDragging ? 5 : 2,
   };
+  const snippable = ["text", "quote", "link", "video"].includes(note.kind || "text");
   return (
     <div
       className={`dl-item dl-item-note ${isDragging ? "dl-item-drag" : ""}`}
@@ -513,25 +690,15 @@ function CanvasNote({ note, pos, canEdit, drag, onDragStart, onEditText, onDelet
       onPointerDown={(e) => canEdit && !editingText && onDragStart(e, note.id, "note")}
     >
       {editingText ? (
-        <textarea
-          className="dl-note-edit"
-          value={draft}
-          rows={3}
-          autoFocus
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={() => {
-            setEditingText(false);
-            onEditText(note.id, draft.trim());
-          }}
-          onKeyDown={(e) => e.key === "Escape" && setEditingText(false)}
-        />
+        <BlockEditor note={note} pages={pages} snippets={snippets} onSave={onPatchBlock} onClose={() => setEditingText(false)} />
       ) : (
-        <p className="dl-note-text">{note.text}</p>
+        <BlockBody note={note} pages={pages} snippets={snippets} onOpenPage={onOpenPage} />
       )}
       {canEdit && !editingText && (
         <div className="dl-fig-actions dl-note-actions" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-          <button className="dl-act" title="Edit text" aria-label="Edit text" onClick={() => { setDraft(note.text); setEditingText(true); }}>✎</button>
-          <button className="dl-act" title="Remove" aria-label="Remove note" onClick={() => onDelete(note.id)}>×</button>
+          <button className="dl-act" title="Edit" aria-label="Edit block" onClick={() => setEditingText(true)}>✎</button>
+          {snippable && <button className="dl-act" title="Save as reusable card" aria-label="Save as reusable card" onClick={() => onSnip(note)}>☆</button>}
+          <button className="dl-act" title="Remove" aria-label="Remove block" onClick={() => onDelete(note.id)}>×</button>
         </div>
       )}
     </div>
@@ -539,7 +706,7 @@ function CanvasNote({ note, pos, canEdit, drag, onDragStart, onEditText, onDelet
 }
 
 // ---------- day canvas ----------
-function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, onPickDay, onAddNote, onLayout, onOpenDetail, onCycleSize, onDeleteImage, onEditNoteText, onDeleteNote, editing, setEditing, onSaveTags, onSaveProduct, onLinkPage, onCreatePage }) {
+function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets, onOpenPage, onPick, onPickDay, onAddBlock, onLayout, onOpenDetail, onCycleSize, onDeleteImage, onSnipImage, onPatchBlock, onSnipBlock, onDeleteNote, editing, setEditing, onSaveTags, onSaveProduct, onLinkPage, onCreatePage }) {
   const [wrapRef, width] = useWidth();
   const [drag, setDrag] = useState(null);
   const dragRef = useRef(null);
@@ -659,7 +826,12 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
             {addOpen && (
               <span className="dl-plusmenu">
                 <button onClick={() => { setAddOpen(false); onPickDay(day.date); }}>Image</button>
-                <button onClick={() => { setAddOpen(false); onAddNote(day.date); }}>Note</button>
+                <button onClick={() => { setAddOpen(false); onAddBlock(day.date, "text"); }}>Text</button>
+                <button onClick={() => { setAddOpen(false); onAddBlock(day.date, "quote"); }}>Quote</button>
+                <button onClick={() => { setAddOpen(false); onAddBlock(day.date, "link"); }}>Link</button>
+                <button onClick={() => { setAddOpen(false); onAddBlock(day.date, "video"); }}>Video</button>
+                {pages.length > 0 && <button onClick={() => { setAddOpen(false); onAddBlock(day.date, "post"); }}>Post</button>}
+                {snippets.length > 0 && <button onClick={() => { setAddOpen(false); onAddBlock(day.date, "card"); }}>Card</button>}
               </span>
             )}
           </span>
@@ -692,7 +864,7 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
             </figure>
           ))}
           {(day.notes || []).map((n) => (
-            <div key={n.id} className="dl-note-flat"><p className="dl-note-text">{n.text}</p></div>
+            <div key={n.id} className="dl-note-flat"><BlockBody note={n} pages={pages} snippets={snippets} onOpenPage={onOpenPage} /></div>
           ))}
         </div>
       ) : (
@@ -717,6 +889,7 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
                   onOpenDetail(day.date, meta);
                 }}
                 onCycleSize={(id) => onCycleSize(day.date, id, layout)}
+              onSnip={(meta) => onSnipImage(day.date, meta)}
                 onEdit={(ed) => setEditing({ ...ed, date: day.date })}
                 onDelete={(id) => onDeleteImage(day.date, id)}
                 editorOpen={Boolean(kindOpen)}
@@ -725,14 +898,18 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
             );
           })}
           {(day.notes || []).map((n) => (
-            <CanvasNote
+            <CanvasBlock
               key={n.id}
               note={n}
               pos={layout.get(n.id) || { fx: 4, fy: 2, fw: 28, top: 0 }}
               canEdit={canEdit}
               drag={drag && drag.moved && drag.mode === "move" ? drag : null}
+              pages={pages}
+              snippets={snippets}
+              onOpenPage={onOpenPage}
               onDragStart={onDragStart}
-              onEditText={(id, text) => onEditNoteText(day.date, id, text)}
+              onPatchBlock={(id, patch) => onPatchBlock(day.date, id, patch)}
+              onSnip={(note) => onSnipBlock(note)}
               onDelete={(id) => onDeleteNote(day.date, id)}
             />
           ))}
@@ -811,7 +988,7 @@ function AboutPage({ canEdit, pages, onOpenPage }) {
 }
 
 // ---------- work / pages ----------
-function WorkIndex({ pages, onOpen }) {
+function WorkIndex({ pages, onOpen, canEdit, onCreate }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -824,6 +1001,11 @@ function WorkIndex({ pages, onOpen }) {
 
       <div className="dl-work">
         <h1 className="dl-work-title">Works</h1>
+        {canEdit && (
+          <p className="dl-work-new">
+            <button className="dl-back" onClick={onCreate}>+ New post</button>
+          </p>
+        )}
         {pages.length === 0 ? (
           <p className="dl-loading">No project pages yet.</p>
         ) : (
@@ -891,15 +1073,13 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
           <>
             <input className="dl-page-title-input" value={page.title} placeholder="Page title" onChange={(e) => onPatch(slug, { title: e.target.value })} />
             <input className="dl-page-sub-input" value={page.subtitle || ""} placeholder="Year — medium, edition… (subtitle)" onChange={(e) => onPatch(slug, { subtitle: e.target.value })} />
-            <textarea className="dl-page-text-input" value={page.body || ""} placeholder="The deeper dive. Blank line = new paragraph." rows={7} onChange={(e) => onPatch(slug, { body: e.target.value })} />
+            <textarea className="dl-page-text-input" value={page.body || ""} placeholder={"Write the post. Blank line = paragraph · ## Heading · > Quote · **bold** · *italic* · [link](https://…)"} rows={7} onChange={(e) => onPatch(slug, { body: e.target.value })} />
           </>
         ) : (
           <>
             <h1 className="dl-page-title">{page.title}</h1>
             {page.subtitle && <p className="dl-page-sub">{page.subtitle}</p>}
-            {(page.body || "").split(/\n\s*\n/).filter(Boolean).map((para, i) => (
-              <p className="dl-page-text" key={i}>{para}</p>
-            ))}
+            {renderBody(page.body)}
           </>
         )}
 
@@ -942,6 +1122,7 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
 export default function App() {
   const [days, setDays] = useState(null);
   const [pages, setPages] = useState([]);
+  const [snippets, setSnippets] = useState([]);
   const [route, setRoute] = useState(() => parseHash());
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -969,12 +1150,13 @@ export default function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const { days: d, pages: p } = await be.fetchAll();
+      const { days: d, pages: p, snippets: sn } = await be.fetchAll();
       d.forEach((x) => {
         if (!x.notes) x.notes = [];
       });
       setDays(d);
       setPages(p);
+      setSnippets(sn || []);
     } catch {
       say("Couldn't reach the backend — check your Supabase settings.");
       setDays([]);
@@ -1263,26 +1445,35 @@ export default function App() {
     [say]
   );
 
-  // notes
-  const addNote = useCallback(
-    async (date) => {
-      const n = { id: uid(), day: date, text: "New note — click ✎ to edit, drag to place.", fx: 4, fy: 2, fw: 28 };
+  // blocks (notes with kinds)
+  const BLOCK_DEFAULTS = {
+    text: { text: "New text — click ✎ to write. **bold**, *italic*, [links](https://…).", data: null },
+    quote: { text: "A quote worth keeping.", data: { cite: "" } },
+    link: { text: "", data: { url: "", label: "" } },
+    video: { text: "", data: { url: "" } },
+    post: { text: "", data: { slug: "" } },
+    card: { text: "", data: { snippetId: "" } },
+  };
+  const addBlock = useCallback(
+    async (date, kind) => {
+      const def = BLOCK_DEFAULTS[kind] || BLOCK_DEFAULTS.text;
+      const n = { id: uid(), day: date, kind, text: def.text, data: def.data ? { ...def.data } : null, fx: 4, fy: 2, fw: 30 };
       try {
         await be.addNote(n);
         await refresh();
       } catch {
-        say("Couldn't add a note.");
+        say("Couldn't add that block — run migrate-v3.sql if you haven't.");
       }
     },
     [refresh, say]
   );
-  const editNoteText = useCallback(
-    async (date, id, text) => {
-      patchLocalNote(id, { text: text || "…" });
+  const patchBlock = useCallback(
+    async (date, id, patch) => {
+      patchLocalNote(id, patch);
       try {
-        await be.patchNote(id, { text: text || "…" });
+        await be.patchNote(id, patch);
       } catch {
-        say("Couldn't save the note.");
+        say("Couldn't save the block.");
       }
     },
     [say]
@@ -1293,11 +1484,56 @@ export default function App() {
         await be.deleteNote(id);
         await refresh();
       } catch {
-        say("Couldn't remove that note.");
+        say("Couldn't remove that block.");
       }
     },
     [refresh, say]
   );
+
+  // reusable cards (snippets)
+  const snipFromBlock = useCallback(
+    async (note) => {
+      const name = (note.text || note.data?.label || note.data?.url || note.kind || "card").slice(0, 28) || "card";
+      const sn = { id: uid(), name, kind: note.kind || "text", data: { ...(note.data || {}), text: note.text } };
+      try {
+        await be.addSnippet(sn);
+        setSnippets((x) => [...x, sn]);
+        say(`Saved "${name}" — insert it anywhere via + → Card.`);
+      } catch {
+        say("Couldn't save the card — run migrate-v3.sql if you haven't.");
+      }
+    },
+    [say]
+  );
+  const snipFromImage = useCallback(
+    async (date, meta) => {
+      const name = (meta.cap || "Image card").slice(0, 28);
+      const sn = { id: uid(), name, kind: "image", data: { url: meta.url, w: meta.w, h: meta.h, cap: meta.cap || "" } };
+      try {
+        await be.addSnippet(sn);
+        setSnippets((x) => [...x, sn]);
+        say(`Saved "${name}" — insert it anywhere via + → Card.`);
+      } catch {
+        say("Couldn't save the card — run migrate-v3.sql if you haven't.");
+      }
+    },
+    [say]
+  );
+
+  // standalone posts (Works page)
+  const createPost = useCallback(async () => {
+    try {
+      let n = pages.length + 1;
+      let slug = `untitled-post-${n}`;
+      while (pages.some((p) => p.slug === slug)) slug = `untitled-post-${++n}`;
+      await be.createPage({ slug, title: "Untitled post", subtitle: "", body: "" });
+      await refresh();
+      openPageHash(slug);
+      say("Post created — hit Edit page and give it a title.");
+    } catch {
+      say("Couldn't create a post.");
+    }
+  }, [pages, refresh, say]);
 
   // pages
   const createPageAndLink = useCallback(
@@ -1497,7 +1733,7 @@ export default function App() {
       <div className="dl-root">
         {siteHeader}
         {route.kind === "work" ? (
-          <WorkIndex key="work" pages={pages} onOpen={openPageHash} />
+          <WorkIndex key="work" pages={pages} onOpen={openPageHash} canEdit={canEdit} onCreate={createPost} />
         ) : route.kind === "about" ? (
           <AboutPage key="about" canEdit={canEdit} pages={pages} onOpenPage={openPageHash} />
         ) : (
@@ -1560,13 +1796,17 @@ export default function App() {
               pages={pages}
               onPick={pick}
               onPickDay={pickForDay}
-              onAddNote={addNote}
+              onAddBlock={addBlock}
               onLayout={persistLayout}
               onOpenDetail={(date, m) => setDetail({ date, id: m.id })}
               onCycleSize={cycleSize}
               onDeleteImage={deleteImage}
-              onEditNoteText={editNoteText}
+              onSnipImage={snipFromImage}
+              onPatchBlock={patchBlock}
+              onSnipBlock={snipFromBlock}
               onDeleteNote={deleteNote}
+              snippets={snippets}
+              onOpenPage={openPageHash}
               editing={editing}
               setEditing={setEditing}
               onSaveTags={saveTags}

@@ -28,10 +28,11 @@ const sb = LOCAL ? null : createClient(URL_, KEY_);
 const publicUrl = (path) => sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 
 async function sbFetchAll() {
-  const [imgs, nts, pgs] = await Promise.all([
+  const [imgs, nts, pgs, snps] = await Promise.all([
     sb.from("images").select("*").order("day", { ascending: false }).order("created_at", { ascending: true }),
     sb.from("notes").select("*").order("created_at", { ascending: true }),
     sb.from("pages").select("*").order("created_at", { ascending: true }),
+    sb.from("snippets").select("*").order("created_at", { ascending: true }),
   ]);
   if (imgs.error) throw imgs.error;
   if (pgs.error) throw pgs.error;
@@ -51,18 +52,28 @@ async function sbFetchAll() {
   for (const n of notesData) {
     const day = dayOf(n.day);
     if (!byDay.has(day)) byDay.set(day, { date: day, images: [], notes: [] });
-    byDay.get(day).notes.push({ id: n.id, text: n.text, fx: n.fx, fy: n.fy, fw: n.fw });
+    byDay.get(day).notes.push({ id: n.id, text: n.text, kind: n.kind || "text", data: n.data || null, fx: n.fx, fy: n.fy, fw: n.fw });
   }
   const days = [...byDay.values()].sort((a, b) => (a.date < b.date ? 1 : -1));
   const pages = pgs.data.map((p) => ({
     slug: p.slug, title: p.title, subtitle: p.subtitle, body: p.body,
     images: (p.images || []).map((m) => ({ ...m, url: publicUrl(m.path) })),
   }));
-  return { days, pages };
+  const snippets = snps.error ? [] : snps.data.map((x) => ({ id: x.id, name: x.name, kind: x.kind, data: x.data || {} }));
+  return { days, pages, snippets };
 }
 
-async function sbAddNote({ id, day, text, fx, fy, fw }) {
-  const { error } = await sb.from("notes").insert({ id, day, text, fx, fy, fw });
+async function sbAddNote({ id, day, text, fx, fy, fw, kind, data }) {
+  const { error } = await sb.from("notes").insert({ id, day, text, fx, fy, fw, kind: kind || "text", data: data || null });
+  if (error) throw error;
+}
+
+async function sbAddSnippet({ id, name, kind, data }) {
+  const { error } = await sb.from("snippets").insert({ id, name, kind, data: data || null });
+  if (error) throw error;
+}
+async function sbDeleteSnippet(id) {
+  const { error } = await sb.from("snippets").delete().eq("id", id);
   if (error) throw error;
 }
 async function sbPatchNote(id, patch) {
@@ -171,10 +182,19 @@ async function lsFetchAll() {
   return {
     days: days.map((d) => ({ ...d, notes: d.notes || [], images: withUrls(d.images, "dl-img-") })),
     pages: pages.map((p) => ({ ...p, images: withUrls(p.images, "dl-pgimg-") })),
+    snippets: LS.get("dl-snips", []),
   };
 }
 
-async function lsAddNote({ id, day, text, fx, fy, fw }) {
+async function lsAddSnippet(sn) {
+  const list = LS.get("dl-snips", []);
+  list.push(sn);
+  LS.set("dl-snips", list);
+}
+async function lsDeleteSnippet(id) {
+  LS.set("dl-snips", LS.get("dl-snips", []).filter((x) => x.id !== id));
+}
+async function lsAddNote({ id, day, text, fx, fy, fw, kind, data }) {
   const days = LS.get("dl-days", []);
   let d = days.find((x) => x.date === day);
   if (!d) {
@@ -183,7 +203,7 @@ async function lsAddNote({ id, day, text, fx, fy, fw }) {
     days.sort((a, b) => (a.date < b.date ? 1 : -1));
   }
   d.notes = d.notes || [];
-  d.notes.push({ id, text, fx, fy, fw });
+  d.notes.push({ id, text, fx, fy, fw, kind: kind || "text", data: data || null });
   LS.set("dl-days", days);
 }
 async function lsPatchNote(id, patch) {
@@ -306,3 +326,5 @@ export const addNote = LOCAL ? lsAddNote : sbAddNote;
 export const patchNote = LOCAL ? lsPatchNote : sbPatchNote;
 export const deleteNote = LOCAL ? lsDeleteNote : sbDeleteNote;
 export const saveLayout = LOCAL ? lsSaveLayout : sbSaveLayout;
+export const addSnippet = LOCAL ? lsAddSnippet : sbAddSnippet;
+export const deleteSnippet = LOCAL ? lsDeleteSnippet : sbDeleteSnippet;
