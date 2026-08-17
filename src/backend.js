@@ -68,6 +68,14 @@ async function sbAddNote({ id, day, text, fx, fy, fw, kind, data }) {
   if (error) throw error;
 }
 
+// upload a standalone asset (e.g. link-card share image); returns a public URL
+async function sbUploadAsset({ id, blob }) {
+  const path = `assets/${id}.jpg`;
+  const up = await sb.storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg" });
+  if (up.error) throw up.error;
+  return publicUrl(path);
+}
+
 async function sbAddSnippet({ id, name, kind, data }) {
   const { error } = await sb.from("snippets").insert({ id, name, kind, data: data || null });
   if (error) throw error;
@@ -184,6 +192,10 @@ async function lsFetchAll() {
     pages: pages.map((p) => ({ ...p, images: withUrls(p.images, "dl-pgimg-") })),
     snippets: LS.get("dl-snips", []),
   };
+}
+
+async function lsUploadAsset({ id, blob }) {
+  return await blobToDataURL(blob); // local preview: inline the image
 }
 
 async function lsAddSnippet(sn) {
@@ -327,4 +339,5 @@ export const patchNote = LOCAL ? lsPatchNote : sbPatchNote;
 export const deleteNote = LOCAL ? lsDeleteNote : sbDeleteNote;
 export const saveLayout = LOCAL ? lsSaveLayout : sbSaveLayout;
 export const addSnippet = LOCAL ? lsAddSnippet : sbAddSnippet;
+export const uploadAsset = LOCAL ? lsUploadAsset : sbUploadAsset;
 export const deleteSnippet = LOCAL ? lsDeleteSnippet : sbDeleteSnippet;

@@ -71,14 +71,14 @@ const openWorkHash = () => (window.location.hash = "#/work");
 const openAboutHash = () => (window.location.hash = "#/about");
 const closePageHash = () => (window.location.hash = "");
 
-function compressFile(file) {
+function compressFile(file, maxDim = MAX_DIM) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
       URL.revokeObjectURL(url);
       let { width: w, height: h } = img;
-      const scale = Math.min(1, MAX_DIM / Math.max(w, h));
+      const scale = Math.min(1, maxDim / Math.max(w, h));
       w = Math.round(w * scale);
       h = Math.round(h * scale);
       const canvas = document.createElement("canvas");
@@ -725,13 +725,24 @@ function MdArea({ value, onChange, rows, placeholder, autoFocus, allowBlocks, cl
   );
 }
 
-function BlockEditor({ note, pages, snippets, onSave, onClose }) {
+function BlockEditor({ note, pages, snippets, onUploadImg, onSave, onClose }) {
   const kind = note.kind || "text";
   const [text, setText] = useState(note.text || "");
   const [cite, setCite] = useState(note.data?.cite || "");
   const [url, setUrl] = useState(note.data?.url || "");
   const [label, setLabel] = useState(note.data?.label || "");
   const [img, setImg] = useState(note.data?.img || "");
+  const [uploading, setUploading] = useState(false);
+  const imgFileRef = useRef(null);
+  const uploadImgFile = async (file) => {
+    if (!file || !onUploadImg) return;
+    setUploading(true);
+    try {
+      const url = await onUploadImg(file);
+      if (url) setImg(url);
+    } catch {}
+    setUploading(false);
+  };
   const [slug, setSlug] = useState(note.data?.slug || "");
   const [snippetId, setSnippetId] = useState(note.data?.snippetId || "");
   const save = () => {
@@ -753,7 +764,31 @@ function BlockEditor({ note, pages, snippets, onSave, onClose }) {
         <input autoFocus={kind === "video"} value={url} placeholder={kind === "video" ? "YouTube or Vimeo URL" : "https://…"} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} />
       )}
       {kind === "link" && <input autoFocus value={label} placeholder="Label" onChange={(e) => setLabel(e.target.value)} />}
-      {kind === "link" && <input value={img} placeholder="Share image URL (optional — the link's og/social image)" onChange={(e) => setImg(e.target.value)} />}
+      {kind === "link" && (
+        <div className="dl-imgrow">
+          {img ? (
+            <span className="dl-imgrow-thumb">
+              <img src={img} alt="" />
+              <button className="dl-act" aria-label="Remove share image" onClick={() => setImg("")}>×</button>
+            </span>
+          ) : (
+            <input value={img} placeholder="Share image URL (optional)" onChange={(e) => setImg(e.target.value)} />
+          )}
+          <button className="dl-imgrow-upload" disabled={uploading} onClick={() => imgFileRef.current?.click()}>
+            {uploading ? "Uploading…" : img ? "Replace" : "Upload"}
+          </button>
+          <input
+            ref={imgFileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => {
+              if (e.target.files?.[0]) uploadImgFile(e.target.files[0]);
+              e.target.value = "";
+            }}
+          />
+        </div>
+      )}
       {kind === "post" && (
         <select autoFocus value={slug} onChange={(e) => setSlug(e.target.value)}>
           <option value="" disabled>Pick a post…</option>
@@ -773,7 +808,7 @@ function BlockEditor({ note, pages, snippets, onSave, onClose }) {
   );
 }
 
-function CanvasBlock({ note, pos, canEdit, drag, resizing, pages, snippets, onOpenPage, onDragStart, onResizeStart, onPatchBlock, onSnip, onDelete }) {
+function CanvasBlock({ note, pos, canEdit, drag, resizing, pages, snippets, onOpenPage, onUploadImg, onDragStart, onResizeStart, onPatchBlock, onSnip, onDelete }) {
   const needsPick =
     (note.kind === "card" && !note.data?.snippetId) ||
     (note.kind === "post" && !note.data?.slug) ||
@@ -796,7 +831,7 @@ function CanvasBlock({ note, pos, canEdit, drag, resizing, pages, snippets, onOp
       onPointerDown={(e) => canEdit && !editingText && onDragStart(e, note.id, "note")}
     >
       {editingText ? (
-        <BlockEditor note={note} pages={pages} snippets={snippets} onSave={onPatchBlock} onClose={() => setEditingText(false)} />
+        <BlockEditor note={note} pages={pages} snippets={snippets} onUploadImg={onUploadImg} onSave={onPatchBlock} onClose={() => setEditingText(false)} />
       ) : (
         <BlockBody note={note} pages={pages} snippets={snippets} onOpenPage={onOpenPage} />
       )}
@@ -824,7 +859,7 @@ function CanvasBlock({ note, pos, canEdit, drag, resizing, pages, snippets, onOp
 }
 
 // ---------- day canvas ----------
-function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets, onOpenPage, onPick, onPickDay, onAddBlock, onLayout, onOpenDetail, onCycleSize, onDeleteImage, onSnipImage, onPatchBlock, onSnipBlock, onDeleteNote, editing, setEditing, onSaveTags, onSaveProduct, onLinkPage, onCreatePage }) {
+function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets, onOpenPage, onUploadImg, onPick, onPickDay, onAddBlock, onLayout, onOpenDetail, onCycleSize, onDeleteImage, onSnipImage, onPatchBlock, onSnipBlock, onDeleteNote, editing, setEditing, onSaveTags, onSaveProduct, onLinkPage, onCreatePage }) {
   const [wrapRef, width] = useWidth();
   const [drag, setDrag] = useState(null);
   const dragRef = useRef(null);
@@ -1030,6 +1065,7 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets,
               pages={pages}
               snippets={snippets}
               onOpenPage={onOpenPage}
+              onUploadImg={onUploadImg}
               onDragStart={onDragStart}
               onPatchBlock={(id, patch) => onPatchBlock(day.date, id, patch)}
               onSnip={(note) => onSnipBlock(note)}
@@ -1795,6 +1831,12 @@ export default function App() {
     return () => window.removeEventListener("keydown", k);
   }, [switchMode, canEdit, detail]);
 
+  // link-card share images: small upload to the asset bucket
+  const uploadLinkImg = useCallback(async (file) => {
+    const { blob } = await compressFile(file, 720);
+    return await be.uploadAsset({ id: uid(), blob });
+  }, []);
+
   const dayTarget = useRef(null);
   const pick = () => {
     dayTarget.current = null;
@@ -1930,6 +1972,7 @@ export default function App() {
               onDeleteNote={deleteNote}
               snippets={snippets}
               onOpenPage={openPageHash}
+              onUploadImg={uploadLinkImg}
               editing={editing}
               setEditing={setEditing}
               onSaveTags={saveTags}

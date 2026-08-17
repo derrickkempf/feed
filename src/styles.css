@@ -1,6 +1,6 @@
 /* ---- type stack ----
    H1/H2: Frankie News (fallback Libre Franklin, loaded in index.html)
-   nav/labels: DEWD Cool Old Sign · body: TT2020 Style E */
+   nav/labels: DEWD Cool Old Sign · body: HEX Franklin (variable) */
 @font-face {
   font-family: 'Frankie News';
   src: url('/fonts/FrankieNewsRegular.woff2') format('woff2'),
@@ -14,14 +14,10 @@
   font-weight: normal; font-style: normal; font-display: swap;
 }
 @font-face {
-  font-family: 'TT2020 Style E';
-  src: url('/fonts/TT2020StyleE-Regular.woff2') format('woff2');
-  font-weight: normal; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'TT2020 Style E';
-  src: url('/fonts/TT2020StyleE-Italic.woff2') format('woff2');
-  font-weight: normal; font-style: italic; font-display: swap;
+  font-family: 'HEX Franklin';
+  src: url('/fonts/HEXFranklin-Variable.woff2') format('woff2');
+  font-weight: 400 800; font-stretch: 60% 100%;
+  font-style: normal; font-display: swap;
 }
 
 html { margin: 0; }
@@ -35,7 +31,7 @@ body { margin: 0; }
   --block: #4d4d4d;
   --head: 'Frankie News', 'Libre Franklin', system-ui, sans-serif;
   --sign: 'DEWD Cool Old Sign', 'Libre Franklin', sans-serif;
-  --type: 'TT2020 Style E', 'Courier New', monospace;
+  --type: 'HEX Franklin', 'Libre Franklin', system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
 .dl-root {
@@ -557,6 +553,21 @@ html { scroll-behavior: smooth; }
 .dl-linkcard-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .dl-linkcard-img { flex: 0 0 86px; }
 .dl-linkcard-img img { width: 86px; height: 62px; object-fit: cover; display: block; border-radius: 4px; }
+
+
+/* link-card image row in the editor */
+.dl-imgrow { display: flex; align-items: center; gap: 8px; }
+.dl-imgrow input { flex: 1; }
+.dl-imgrow-thumb { position: relative; flex: 1; display: flex; align-items: center; }
+.dl-imgrow-thumb img { width: 86px; height: 62px; object-fit: cover; border-radius: 4px; display: block; }
+.dl-imgrow-thumb .dl-act { position: absolute; top: -6px; left: 72px; }
+.dl-imgrow-upload {
+  font-family: var(--sign); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 8px 14px; border-radius: 999px; border: 1px solid var(--ink);
+  background: var(--paper); color: var(--ink); cursor: pointer; white-space: nowrap;
+}
+.dl-imgrow-upload:hover { background: var(--ink); color: var(--paper); }
+.dl-imgrow-upload:disabled { opacity: .5; cursor: default; }
 
 /* ===== drop wash / toasts ===== */
 .dl-wash { position: fixed; inset: 0; z-index: 40; pointer-events: none; background: rgba(249,249,249,.93); display: flex; align-items: center; justify-content: center; }
