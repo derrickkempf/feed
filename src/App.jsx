@@ -1187,8 +1187,27 @@ function WorkIndex({ pages, onOpen, canEdit, onCreate }) {
   );
 }
 
+const IMG_MODES = ["regular", "wide", "full", "gallery", "slider"];
+function groupImages(images) {
+  const groups = [];
+  for (const m of images) {
+    const mode = m.mode || "regular";
+    const last = groups[groups.length - 1];
+    if ((mode === "gallery" || mode === "slider") && last && last.mode === mode) last.items.push(m);
+    else groups.push({ mode, items: [m] });
+  }
+  return groups;
+}
+
 function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemoveImage, onDeletePage }) {
   const page = pages.find((p) => p.slug === slug);
+  const setImageMode = (id, mode) =>
+    onPatch(slug, {
+      images: page.images.map((m) => {
+        const { url, ...rest } = m;
+        return m.id === id ? { ...rest, mode } : rest;
+      }),
+    });
   const [edit, setEdit] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const addRef = useRef(null);
@@ -1243,16 +1262,38 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
         )}
 
         <div className="dl-page-imgs">
-          {page.images.map((m) => (
-            <figure key={m.id} className="dl-fig dl-page-fig" style={{ aspectRatio: `${m.w} / ${m.h}`, width: `min(100%, calc(76vh * ${(m.w / m.h).toFixed(4)}))` }}>
-              <img src={m.url} alt="" loading="lazy" draggable={false} />
-              {edit && (
-                <div className="dl-fig-actions" style={{ opacity: 1 }}>
-                  <button className="dl-act" aria-label="Remove image" onClick={() => onRemoveImage(slug, m.id)}>×</button>
-                </div>
-              )}
-            </figure>
-          ))}
+          {groupImages(page.images).map((g, gi) => {
+            const figs = g.items.map((m) => {
+              const cls = g.mode === "wide" ? "dl-imgw-wide" : g.mode === "full" ? "dl-imgw-full" : "";
+              const style =
+                g.mode === "regular"
+                  ? { aspectRatio: `${m.w} / ${m.h}`, width: `min(100%, calc(76vh * ${(m.w / m.h).toFixed(4)}))` }
+                  : { aspectRatio: `${m.w} / ${m.h}` };
+              return (
+                <figure key={m.id} className={`dl-fig dl-page-fig ${cls}`} style={style}>
+                  <img src={m.url} alt="" loading="lazy" draggable={false} />
+                  {edit && (
+                    <>
+                      <select
+                        className="dl-modepick"
+                        value={m.mode || "regular"}
+                        onChange={(e) => setImageMode(m.id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {IMG_MODES.map((x) => <option key={x} value={x}>{x}</option>)}
+                      </select>
+                      <div className="dl-fig-actions" style={{ opacity: 1 }}>
+                        <button className="dl-act" aria-label="Remove image" onClick={() => onRemoveImage(slug, m.id)}>×</button>
+                      </div>
+                    </>
+                  )}
+                </figure>
+              );
+            });
+            if (g.mode === "gallery") return <div className="dl-gal" key={gi}>{figs}</div>;
+            if (g.mode === "slider") return <div className="dl-slider" key={gi}>{figs}</div>;
+            return figs;
+          })}
         </div>
 
         {edit && (

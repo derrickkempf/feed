@@ -352,21 +352,49 @@ html { scroll-behavior: smooth; }
   text-transform: uppercase; letter-spacing: 0.01em;
 }
 .dl-work-card-snip { font-family: var(--type); font-size: 13.5px; line-height: 1.6; color: #333; }
+/* spotlight: hovering one card dims the rest */
+.dl-work-grid .dl-work-card { transition: opacity .25s ease; }
+.dl-work-grid:hover .dl-work-card { opacity: .4; }
+.dl-work-grid .dl-work-card:hover { opacity: 1; }
+
 .dl-work-card-more {
   font-family: var(--sign); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
   padding-bottom: 2px; margin-top: 2px;
 }
 
 /* ===== deeper-dive page ===== */
-.dl-page-body { flex: 1; width: 100%; max-width: 980px; margin: 0 auto; padding: 24px 48px 150px; }
+.dl-page-body { flex: 1; width: 100%; max-width: 760px; margin: 0 auto; padding: 24px 40px 150px; }
 .dl-page-title {
   font-family: var(--head); font-size: clamp(30px, 4vw, 48px);
   text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.02; margin: 0 0 10px;
 }
 .dl-page-sub { font-family: var(--type); font-size: 13px; color: var(--mute); margin: 0 0 26px; }
-.dl-page-text { font-family: var(--type); max-width: 66ch; margin: 0 0 16px; color: #222; }
+.dl-page-text { font-family: var(--type); max-width: none; margin: 0 0 18px; color: #222; font-size: 16px; line-height: 1.75; }
 .dl-page-imgs { margin-top: 38px; display: flex; flex-direction: column; gap: 30px; }
 .dl-page-fig { cursor: default; overflow: hidden; max-width: 100%; }
+/* ===== post image modes (regular · wide · full · gallery · slider) ===== */
+.dl-imgw-wide { width: min(1280px, calc(100vw - 80px)); margin-left: 50%; transform: translateX(-50%); }
+.dl-imgw-full { width: 100vw; margin-left: 50%; transform: translateX(-50%); }
+.dl-gal {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;
+  width: min(1280px, calc(100vw - 80px)); margin-left: 50%; transform: translateX(-50%);
+}
+.dl-gal .dl-page-fig { margin: 0; }
+.dl-slider {
+  display: flex; gap: 14px; overflow-x: auto;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+  width: 100vw; margin-left: 50%; transform: translateX(-50%);
+  padding: 0 40px 8px; scrollbar-width: none;
+}
+.dl-slider::-webkit-scrollbar { display: none; }
+.dl-slider .dl-page-fig { flex: 0 0 auto; height: min(62vh, 560px); margin: 0; scroll-snap-align: center; }
+.dl-slider .dl-page-fig img { height: 100%; width: auto; }
+.dl-modepick {
+  position: absolute; top: 8px; left: 8px; z-index: 3;
+  font-family: var(--sign); font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  background: rgba(0,0,0,.6); color: #fff; border: none; border-radius: 4px; padding: 4px 6px;
+}
+
 .dl-page-fig img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dl-page-add { min-height: 140px; margin-top: 26px; font-size: 14px; }
 .dl-page-title-input, .dl-page-sub-input, .dl-page-text-input {
@@ -565,8 +593,7 @@ html { scroll-behavior: smooth; }
 
 /* ===== animated underlines ===== */
 /* hover links: line grows in from the left */
-.dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink,
-.dl-work-card-title, .dl-postcard-title {
+.dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink {
   text-decoration: none;
   background-image: linear-gradient(currentColor, currentColor);
   background-repeat: no-repeat;
@@ -577,9 +604,7 @@ html { scroll-behavior: smooth; }
 .dl-navlink:hover, .dl-navlink:focus-visible,
 .dl-mark:hover, .dl-mark:focus-visible,
 .dl-footer-links a:hover, .dl-footer-links a:focus-visible,
-.dl-split-pagelink:hover, .dl-split-pagelink:focus-visible,
-.dl-work-card:hover .dl-work-card-title,
-.dl-postcard:hover .dl-postcard-title {
+.dl-split-pagelink:hover, .dl-split-pagelink:focus-visible {
   background-size: 100% 1.5px;
 }
 
@@ -601,7 +626,6 @@ html { scroll-behavior: smooth; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink,
-  .dl-work-card-title, .dl-postcard-title,
   .dl-clear, .dl-about-mail, .dl-pagelist a, .dl-work-card-more,
   .dl-note-text a, .dl-quote a, .dl-page-text a { transition: none; }
 }
