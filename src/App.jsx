@@ -446,7 +446,7 @@ function CanvasImg({ meta, pos, canEdit, drag, resizing, onDragStart, onResizeSt
     left: `${pos.fx}%`,
     top: `${pos.top}px`,
     width: `${pos.fw}%`,
-    transform: isDragging ? `translate(${drag.dx}px, ${drag.dy}px)` : undefined,
+    transform: drag && drag.id === meta.id ? `translate(${drag.dx}px, ${drag.dy}px)` : undefined,
     zIndex: isDragging ? 5 : undefined,
   };
   return (
