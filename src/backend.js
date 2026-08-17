@@ -139,16 +139,17 @@ async function sbDeletePage(slug) {
   await sb.from("images").update({ page: null }).eq("page", slug);
 }
 
-async function sbAddPageImage({ slug, id, blob, w, h }) {
+async function sbAddPageImage({ slug, id, blob, w, h, mode }) {
   const path = `pages/${slug}/${id}.jpg`;
   const up = await sb.storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg" });
   if (up.error) throw up.error;
   const { data, error } = await sb.from("pages").select("images").eq("slug", slug).single();
   if (error) throw error;
-  const images = [...(data.images || []), { id, w, h, path }];
+  const meta = mode && mode !== "regular" ? { id, w, h, path, mode } : { id, w, h, path };
+  const images = [...(data.images || []), meta];
   const upd = await sb.from("pages").update({ images }).eq("slug", slug);
   if (upd.error) throw upd.error;
-  return { id, w, h, path, url: publicUrl(path) };
+  return { ...meta, url: publicUrl(path) };
 }
 
 async function sbRemovePageImage(slug, id) {
@@ -290,14 +291,15 @@ async function lsDeletePage(slug) {
   LS.set("dl-days", days);
 }
 
-async function lsAddPageImage({ slug, id, blob, w, h }) {
+async function lsAddPageImage({ slug, id, blob, w, h, mode }) {
   const data = await blobToDataURL(blob);
   localStorage.setItem(`dl-pgimg-${id}`, data);
   const pages = LS.get("dl-pages", []);
   const p = pages.find((x) => x.slug === slug);
-  if (p) p.images.push({ id, w, h });
+  const meta = mode && mode !== "regular" ? { id, w, h, mode } : { id, w, h };
+  if (p) p.images.push(meta);
   LS.set("dl-pages", pages);
-  return { id, w, h, url: data };
+  return { ...meta, url: data };
 }
 
 async function lsRemovePageImage(slug, id) {

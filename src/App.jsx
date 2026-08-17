@@ -524,13 +524,24 @@ function renderBody(body) {
     .split(/\n\s*\n/)
     .filter(Boolean)
     .map((para, i) => {
+      if (para.startsWith("##### ")) return <h5 className="dl-page-h5" key={i}>{mdInline(para.slice(6))}</h5>;
+      if (para.startsWith("#### ")) return <h4 className="dl-page-h4" key={i}>{mdInline(para.slice(5))}</h4>;
+      if (para.startsWith("### ")) return <h3 className="dl-page-h3" key={i}>{mdInline(para.slice(4))}</h3>;
       if (para.startsWith("## ")) return <h2 className="dl-page-h2" key={i}>{mdInline(para.slice(3))}</h2>;
-      if (para.startsWith("> "))
+      if (para.startsWith("> ")) {
+        const inner = para.replace(/^> ?/gm, "");
+        if (inner.startsWith("## "))
+          return (
+            <blockquote className="dl-quote dl-quote-big" key={i}>
+              <p>{mdInline(inner.slice(3))}</p>
+            </blockquote>
+          );
         return (
           <blockquote className="dl-quote" key={i}>
-            <p>{mdInline(para.replace(/^> ?/gm, ""))}</p>
+            <p>{mdInline(inner)}</p>
           </blockquote>
         );
+      }
       return <p className="dl-page-text" key={i}>{mdInline(para)}</p>;
     });
 }
@@ -675,6 +686,18 @@ function MdArea({ value, onChange, rows, placeholder, autoFocus, allowBlocks, cl
     onChange(value.slice(0, ls) + pfx + value.slice(ls));
     setSel(null);
   };
+  const cycleHeading = () => {
+    if (!sel) return;
+    const ls = value.lastIndexOf("\n", sel.start - 1) + 1;
+    const rest = value.slice(ls);
+    const m = rest.match(/^(#{2,5}) /);
+    let out;
+    if (!m) out = value.slice(0, ls) + "## " + rest;
+    else if (m[1].length >= 5) out = value.slice(0, ls) + rest.slice(m[0].length);
+    else out = value.slice(0, ls) + "#" + rest;
+    onChange(out);
+    setSel(null);
+  };
   const applyLink = () => {
     if (!linkUrl.trim() || !sel) return;
     wrap("[", `](${linkUrl.trim()})`);
@@ -703,7 +726,7 @@ function MdArea({ value, onChange, rows, placeholder, autoFocus, allowBlocks, cl
             <>
               <button aria-label="Bold" onMouseDown={(e) => { e.preventDefault(); wrap("**"); }}><b>B</b></button>
               <button aria-label="Italic" onMouseDown={(e) => { e.preventDefault(); wrap("*"); }}><i>I</i></button>
-              {allowBlocks && <button aria-label="Heading" onMouseDown={(e) => { e.preventDefault(); linePrefix("## "); }}>H</button>}
+              {allowBlocks && <button aria-label="Heading — click again for smaller" title="Heading (H2→H5)" onMouseDown={(e) => { e.preventDefault(); cycleHeading(); }}>H</button>}
               {allowBlocks && <button aria-label="Quote" onMouseDown={(e) => { e.preventDefault(); linePrefix("> "); }}>&ldquo;&rdquo;</button>}
               <button aria-label="Link" onMouseDown={(e) => { e.preventDefault(); setLinkMode(true); }}>⌁</button>
             </>
@@ -1187,6 +1210,35 @@ function WorkIndex({ pages, onOpen, canEdit, onCreate }) {
   );
 }
 
+function PostNav({ pages, slug }) {
+  const idx = pages.findIndex((p) => p.slug === slug);
+  const prev = idx > 0 ? pages[idx - 1] : null;
+  const next = idx >= 0 && idx < pages.length - 1 ? pages[idx + 1] : null;
+  return (
+    <nav className="dl-postnav" aria-label="Post navigation">
+      <button
+        className={`dl-postnav-btn dl-postnav-prev ${!prev ? "dl-postnav-off" : ""}`}
+        aria-label={prev ? `Previous: ${prev.title}` : "No earlier posts"}
+        disabled={!prev}
+        onClick={() => prev && openPageHash(prev.slug)}
+      >
+        <svg viewBox="0 0 58.1 13.25" aria-hidden="true"><path d="M58.05,4.61c-.1-.16-.24-.25-.43-.25,0,0-.14.04-.29.04s-.33,0-.48-.04c-1.57,0-2.62.04-3.14.04s-1.05,0-1.57-.04c-1.76,0-2.9-.04-3.43-.08-.57.12-1.05.12-1.28.12s-.43,0-.67-.04c-.9,0-1.47.04-1.81.04s-.71,0-1.05-.04c-.29,0-.57-.08-.9-.21-.14,0-.43.12-.57.12-.33,0-.43-.04-.43-.04-.1,0-.19,0-.29.04-.43.08-.81.12-1.19.12-.19,0-.71-.04-1.81-.04-.95,0-1.62.04-2,.04-.33,0-.67,0-1-.04-.52.04-1.05.04-1.52.04-.52,0-1.38-.04-3.05-.04-.76,0-1.29.04-1.43.04-.33,0-.67-.04-1-.12-.33,0-.48.08-.67.08h-.81c-1.09,0-1.86.04-2.24.04s-.76,0-1.14-.04c-1.14,0-1.86.08-2.19.08-.43,0-.86-.04-1.28-.17-1,.12-1.71.12-2.09.12-.33,0-.71,0-1.05-.04-1.09,0-1.86-.04-2.28-.08-.52,0-.9.08-1.24.08h-.62c-.33,0-.76-.04-1.24-.08-.04,0-.1,0-.16.02,0-1.12.01-2.22.02-3.22,0-.29-.01-.65-.14-.89l-.05-.08c-.51-.39-1.27.25-1.81.53-.74.5-1.45.85-2.27,1.19-2.01.93-3.97,2.12-6,3.13-.65.34-1.73.94-1.43,1.96.33.92,1.3,1.21,2.02,1.62,3.06,1.57,6.07,3.55,9.22,4.7.56-.19.43-1.14.46-1.72,0-.92-.02-1.58-.02-2.45.2.04.43.06.65.06h45.26c.14-.04.43-.29.43-.42v-1.2c0-1,.05-1.66.05-1.99,0-.29,0-.62-.05-.91Z"/></svg>
+      </button>
+      <button className="dl-postnav-btn dl-postnav-grid" aria-label="All works" onClick={openWorkHash}>
+        <svg viewBox="0 0 30.25 30.76" aria-hidden="true"><path d="M26.65,7.61c-5.17.02-5.26-7.67.02-7.61,4.65.32,4.84,7.21.14,7.6h-.16Z"/><path d="M15.28,7.61C10.11,7.63,10.02-.05,15.3,0c4.65.32,4.84,7.21.14,7.6h-.16Z"/><path d="M3.91,7.61C-1.26,7.63-1.35-.05,3.93,0c4.65.32,4.84,7.21.14,7.6h-.16Z"/><path d="M26.65,30.76c-5.17.02-5.26-7.67.02-7.61,4.65.32,4.84,7.21.14,7.6h-.16Z"/><path d="M15.28,30.76c-5.17.02-5.26-7.67.02-7.61,4.65.32,4.84,7.21.14,7.6h-.16Z"/><path d="M3.91,30.76c-5.17.02-5.26-7.67.02-7.61,4.65.32,4.84,7.21.14,7.6h-.16Z"/><path d="M26.65,19.19c-5.17.02-5.26-7.67.02-7.61,4.65.32,4.84,7.21.14,7.6h-.16Z"/><path d="M15.28,19.19c-5.17.02-5.26-7.67.02-7.61,4.65.32,4.84,7.21.14,7.6h-.16Z"/><path d="M3.91,19.19c-5.17.02-5.26-7.67.02-7.61,4.65.32,4.84,7.21.14,7.6h-.16Z"/></svg>
+      </button>
+      <button
+        className={`dl-postnav-btn dl-postnav-next ${!next ? "dl-postnav-off" : ""}`}
+        aria-label={next ? `Next: ${next.title}` : "No newer posts"}
+        disabled={!next}
+        onClick={() => next && openPageHash(next.slug)}
+      >
+        <svg viewBox="0 0 58.13 13.17" aria-hidden="true"><path d="M57.75,5.74l-.1-.1c-2.08-1.48-4.46-2.43-6.65-3.69-1.36-.58-2.74-1.76-4.17-1.95-.24.07-.35.36-.41.64-.11,1.46-.05,2.23-.05,3.71-.03,0-.14.04-.26.04-.14,0-.33,0-.48-.04-1.57,0-2.62.04-3.14.04s-1.05,0-1.57-.04c-1.76,0-2.9-.04-3.43-.08-.57.12-1.05.12-1.28.12s-.43,0-.67-.04c-.9,0-1.47.04-1.81.04s-.71,0-1.05-.04c-.29,0-3,.04-3.38.04-.19,0-.71-.04-1.81-.04-.95,0-1.62.04-2,.04-.33,0-.67,0-1-.04-.52.04-1.05.04-1.52.04-.52,0-1.38-.04-3.05-.04-.76,0-1.29.04-1.43.04-.33,0-.67-.04-1-.12-.33,0-.48.08-.67.08h-.81c-1.09,0-1.86.04-2.24.04s-.76,0-1.14-.04c-1.14,0-1.86.08-2.19.08-.43,0-3-.04-3.38-.04-.33,0-.71,0-1.05-.04-1.09,0-1.86-.04-2.28-.08-.52,0-.9.08-1.24.08h-.62c-.33,0-1.67,0-1.71.12-.14.08-.19.25-.19.5v3.48c0,.21.05.33.09.46.24.17.67.21,1.05.21h45.21c0,1.15,0,2.29.02,3.3.05.52.3.87.81.73,2.76-1.11,5.33-2.77,8.03-4.12,1.06-.62,3.96-1.38,2.54-3.29Z"/></svg>
+      </button>
+    </nav>
+  );
+}
+
 const IMG_MODES = ["regular", "wide", "full", "gallery", "slider"];
 function groupImages(images) {
   const groups = [];
@@ -1201,6 +1253,7 @@ function groupImages(images) {
 
 function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemoveImage, onDeletePage }) {
   const page = pages.find((p) => p.slug === slug);
+  const [addMode, setAddMode] = useState("regular");
   const setImageMode = (id, mode) =>
     onPatch(slug, {
       images: page.images.map((m) => {
@@ -1305,14 +1358,23 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
               multiple
               hidden
               onChange={(e) => {
-                if (e.target.files?.length) onAddImages(slug, e.target.files);
+                if (e.target.files?.length) onAddImages(slug, e.target.files, addMode);
                 e.target.value = "";
               }}
             />
-            <button className="dl-stage dl-page-add" onClick={() => addRef.current?.click()}>+ Add images to this page</button>
+            <div className="dl-addrow">
+              <button className="dl-stage dl-page-add" onClick={() => addRef.current?.click()}>+ Add images to this page</button>
+              <label className="dl-addrow-mode">
+                New images land as
+                <select value={addMode} onChange={(e) => setAddMode(e.target.value)}>
+                  {IMG_MODES.map((x) => <option key={x} value={x}>{x}</option>)}
+                </select>
+              </label>
+            </div>
           </>
         )}
       </article>
+      <PostNav pages={pages} slug={slug} />
       <Footer />
     </div>
   );
@@ -1760,7 +1822,7 @@ export default function App() {
     } catch {}
   }, []);
   const addPageImages = useCallback(
-    async (slug, fileList) => {
+    async (slug, fileList, mode = "regular") => {
       const files = Array.from(fileList || []).filter((f) => f.type.startsWith("image/"));
       if (!files.length) return;
       setBusy(true);
@@ -1769,7 +1831,7 @@ export default function App() {
         for (const f of files) {
           try {
             const { blob, w, h } = await compressFile(f);
-            await be.addPageImage({ slug, id: uid(), blob, w, h });
+            await be.addPageImage({ slug, id: uid(), blob, w, h, mode });
             added++;
           } catch {
             say(`Couldn't add ${f.name}`);

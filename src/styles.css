@@ -354,7 +354,7 @@ html { scroll-behavior: smooth; }
 .dl-work-card-snip { font-family: var(--type); font-size: 13.5px; line-height: 1.6; color: #333; }
 /* spotlight: hovering one card dims the rest */
 .dl-work-grid .dl-work-card { transition: opacity .25s ease; }
-.dl-work-grid:hover .dl-work-card { opacity: .4; }
+.dl-work-grid:has(.dl-work-card:hover) .dl-work-card { opacity: .4; }
 .dl-work-grid .dl-work-card:hover { opacity: 1; }
 
 .dl-work-card-more {
@@ -480,7 +480,7 @@ html { scroll-behavior: smooth; }
 .dl-page-sub { animation: dl-view .5s .07s ease both; }
 .dl-page-text, .dl-about-text { animation: dl-view .55s .14s ease both; }
 .dl-page-imgs, .dl-about-img { animation: dl-view .6s .2s ease both; }
-.dl-work-grid .dl-work-card { animation: dl-view .5s ease both; }
+.dl-work-grid .dl-work-card { animation: dl-view .5s ease backwards; }
 .dl-work-grid .dl-work-card:nth-child(2) { animation-delay: .07s; }
 .dl-work-grid .dl-work-card:nth-child(3) { animation-delay: .14s; }
 .dl-work-grid .dl-work-card:nth-child(4) { animation-delay: .21s; }
@@ -629,6 +629,38 @@ html { scroll-behavior: smooth; }
   .dl-clear, .dl-about-mail, .dl-pagelist a, .dl-work-card-more,
   .dl-note-text a, .dl-quote a, .dl-page-text a { transition: none; }
 }
+
+
+/* frankie heading scale + display quote */
+.dl-page-h3 { font-family: var(--head); font-size: clamp(19px, 2.4vw, 25px); text-transform: uppercase; line-height: 1.08; margin: 26px 0 10px; }
+.dl-page-h4 { font-family: var(--head); font-size: clamp(17px, 2vw, 21px); text-transform: uppercase; line-height: 1.1; margin: 22px 0 8px; }
+.dl-page-h5 { font-family: var(--head); font-size: 16px; letter-spacing: .02em; text-transform: uppercase; line-height: 1.15; margin: 20px 0 8px; }
+.dl-quote-big { border-left-width: 3px; padding-left: 20px; }
+.dl-quote-big p { font-family: var(--head); font-style: normal; font-size: clamp(20px, 2.8vw, 30px); line-height: 1.12; text-transform: uppercase; }
+
+/* upload row with default-mode picker */
+.dl-addrow { margin-top: 26px; }
+.dl-addrow .dl-page-add { margin-top: 0; }
+.dl-addrow-mode {
+  display: flex; align-items: center; gap: 8px; margin-top: 10px; justify-content: center;
+  font-family: var(--sign); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute);
+}
+.dl-addrow-mode select {
+  font-family: var(--type); font-size: 12px; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 4px; background: var(--paper); padding: 4px 8px;
+}
+
+/* post navigation (hand-drawn arrows + grid) */
+.dl-postnav { display: flex; align-items: center; justify-content: center; gap: 48px; margin: 40px 0 60px; }
+.dl-postnav-btn { background: none; border: none; padding: 8px; cursor: pointer; }
+.dl-postnav-btn svg { display: block; fill: var(--ink); transition: transform .25s ease, opacity .25s ease; }
+.dl-postnav-prev svg, .dl-postnav-next svg { width: 58px; height: auto; }
+.dl-postnav-grid svg { width: 26px; height: auto; }
+.dl-postnav-prev:hover svg { transform: translateX(-5px); }
+.dl-postnav-next:hover svg { transform: translateX(5px); }
+.dl-postnav-grid:hover svg { transform: scale(1.1); }
+.dl-postnav-off { opacity: .5; cursor: default; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .dl-postnav-btn svg { transition: none; } }
 
 /* ===== drop wash / toasts ===== */
 .dl-wash { position: fixed; inset: 0; z-index: 40; pointer-events: none; background: rgba(249,249,249,.93); display: flex; align-items: center; justify-content: center; }
