@@ -698,18 +698,46 @@ html { scroll-behavior: smooth; }
 .dl-slider-wrap { position: relative; }
 .dl-slider-arrow {
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
-  width: 44px; height: 44px; border-radius: 50%; border: none;
-  background: rgba(249,249,249,.9); box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  width: 44px; height: 44px; border-radius: 0; border: none;
+  background: none; box-shadow: none;
   display: flex; align-items: center; justify-content: center; cursor: pointer;
+  opacity: 1;
 }
 .dl-slider-arrow svg { width: 20px; height: auto; fill: var(--ink); }
 .dl-slider-arrow-prev { left: 12px; }
 .dl-slider-arrow-next { right: 12px; }
-.dl-slider-arrow:disabled { opacity: .3; cursor: default; }
+.dl-slider-arrow:disabled { opacity: 1; cursor: default; }
 
 
 .dl-insertrow { margin-top: 16px; text-align: center; }
 .dl-insertrow .dl-addrow-mode { justify-content: center; margin-top: 8px; }
+
+
+/* editable About photo */
+.dl-about-img { position: relative; overflow: hidden; }
+.dl-about-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dl-about-img-ph {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--sign); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute);
+}
+.dl-about-img-pick {
+  position: absolute; bottom: 10px; right: 10px; z-index: 3;
+  font-family: var(--sign); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--ink);
+  background: rgba(249,249,249,.9); color: var(--ink); cursor: pointer;
+}
+.dl-about-img-pick:hover { background: var(--ink); color: var(--paper); }
+.dl-about-img-x { position: absolute; top: 10px; right: 10px; z-index: 3; }
+
+/* editable section label */
+.dl-about-labelfield {
+  display: flex; flex-direction: column; gap: 4px; margin-top: 14px;
+  font-family: var(--sign); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute);
+}
+.dl-about-labelfield input {
+  font-family: var(--type); font-size: 14px; text-transform: none; letter-spacing: normal; color: var(--ink);
+  border: 1px solid var(--ink); border-radius: 4px; background: var(--paper); padding: 8px;
+}
 
 /* ===== drop wash / toasts ===== */
 .dl-wash { position: fixed; inset: 0; z-index: 40; pointer-events: none; background: rgba(249,249,249,.93); display: flex; align-items: center; justify-content: center; }

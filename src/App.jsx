@@ -1147,7 +1147,7 @@ function Footer() {
 }
 
 // ---------- about page ----------
-function AboutPage({ canEdit, pages, aboutPage, onSaveAbout, onOpenPage }) {
+function AboutPage({ canEdit, pages, aboutPage, onSaveAbout, onOpenPage, onUploadPhoto, onRemovePhoto }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -1155,24 +1155,57 @@ function AboutPage({ canEdit, pages, aboutPage, onSaveAbout, onOpenPage }) {
     "Hello!\n\nI'm Derrick Kempf, an artist and brand identity designer with over two decades of experience shaping brands and translating vision into meaningful design. I bring a balance of discipline and creative freedom to both brand consulting and personal art, and I am dedicated to helping fellow artists find simplicity and joy in the creative process. I love drawing and the subjects I illustrate typically consist of weird, balding men, or Dewds, as I call them. See more of them out at dewd.cool.\n\nLet's make something cool together.\n\n[Email me](mailto:hello@derrickkempf.com) or connect with me on socials.";
   const [editingAbout, setEditingAbout] = useState(false);
   const [draft, setDraft] = useState(aboutPage?.body || DEFAULT_BIO);
+  const [labelDraft, setLabelDraft] = useState(aboutPage?.subtitle || "Pages");
   useEffect(() => {
     setDraft(aboutPage?.body || DEFAULT_BIO);
-  }, [aboutPage?.body]);
+    setLabelDraft(aboutPage?.subtitle || "Pages");
+  }, [aboutPage?.body, aboutPage?.subtitle]);
   const body = aboutPage?.body || DEFAULT_BIO;
+  const pagesLabel = aboutPage?.subtitle || "Pages";
+  const photo = aboutPage?.images?.[0];
+  const photoRef = useRef(null);
   return (
     <div className="dl-page">
 
       <div className="dl-about">
         <h1 className="dl-work-title dl-about-title">About</h1>
         <div className="dl-about-cols">
-          <div className="dl-about-img" aria-hidden="true" />
+          <div className="dl-about-img">
+            {photo ? (
+              <img src={photo.url} alt="" loading="lazy" draggable={false} />
+            ) : (
+              canEdit && <span className="dl-about-img-ph">+ Add photo</span>
+            )}
+            {canEdit && (
+              <>
+                <input
+                  ref={photoRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) onUploadPhoto(e.target.files[0]);
+                    e.target.value = "";
+                  }}
+                />
+                <button className="dl-about-img-pick" onClick={() => photoRef.current?.click()}>
+                  {photo ? "Replace" : "Upload"}
+                </button>
+                {photo && <button className="dl-act dl-about-img-x" aria-label="Remove photo" onClick={onRemovePhoto}>×</button>}
+              </>
+            )}
+          </div>
           <div className="dl-about-text">
             {canEdit && editingAbout ? (
               <>
                 <MdArea className="dl-page-text-input" value={draft} rows={9} allowBlocks onChange={setDraft} />
+                <label className="dl-about-labelfield">
+                  Section label (below)
+                  <input value={labelDraft} placeholder="Pages" onChange={(e) => setLabelDraft(e.target.value)} />
+                </label>
                 <p className="dl-prodedit-row">
-                  <button className="dl-prodedit-save" onClick={() => { onSaveAbout(draft); setEditingAbout(false); }}>Save</button>
-                  <button className="dl-back" onClick={() => { setDraft(body); setEditingAbout(false); }}>Cancel</button>
+                  <button className="dl-prodedit-save" onClick={() => { onSaveAbout(draft, labelDraft); setEditingAbout(false); }}>Save</button>
+                  <button className="dl-back" onClick={() => { setDraft(body); setLabelDraft(pagesLabel); setEditingAbout(false); }}>Cancel</button>
                 </p>
               </>
             ) : (
@@ -1185,7 +1218,7 @@ function AboutPage({ canEdit, pages, aboutPage, onSaveAbout, onOpenPage }) {
                     <button className="dl-back" onClick={() => setEditingAbout(true)}>Edit this page</button>
                   </p>
                 )}
-                <p className="dl-split-label">Pages</p>
+                <p className="dl-split-label">{pagesLabel}</p>
                 {pages.length ? (
                   <p className="dl-pagelist">
                     {pages.map((p, i) => (
@@ -1938,23 +1971,49 @@ export default function App() {
       await be.patchPage(slug, patch);
     } catch {}
   }, []);
-  const saveAbout = useCallback(
-    async (body) => {
+  const ensureAboutPage = useCallback(
+    async (defaults = {}) => {
       const exists = pages.some((p) => p.slug === "__about__");
+      if (!exists) {
+        await be.createPage({ slug: "__about__", title: "About", subtitle: "", body: "", ...defaults });
+        await refresh();
+      }
+    },
+    [pages, refresh]
+  );
+  const saveAbout = useCallback(
+    async (body, subtitle) => {
       try {
-        if (!exists) {
-          await be.createPage({ slug: "__about__", title: "About", subtitle: "", body });
-          await refresh();
-        } else {
-          await patchPage("__about__", { body });
-        }
+        await ensureAboutPage({ body, subtitle });
+        await patchPage("__about__", { body, subtitle });
         say("About page saved.");
       } catch {
         say("Couldn't save the About page.");
       }
     },
-    [pages, patchPage, refresh, say]
+    [ensureAboutPage, patchPage, say]
   );
+  const uploadAboutPhoto = useCallback(
+    async (file) => {
+      if (!file || !file.type.startsWith("image/")) return;
+      setBusy(true);
+      try {
+        await ensureAboutPage();
+        const current = pages.find((p) => p.slug === "__about__");
+        if (current?.images?.[0]) await removePageImage("__about__", current.images[0].id);
+        await addPageImages("__about__", [file], "regular");
+        say("Photo updated.");
+      } catch {
+        say("Couldn't upload that photo.");
+      }
+      setBusy(false);
+    },
+    [ensureAboutPage, pages, say]
+  );
+  const removeAboutPhoto = useCallback(async () => {
+    const current = pages.find((p) => p.slug === "__about__");
+    if (current?.images?.[0]) await removePageImage("__about__", current.images[0].id);
+  }, [pages]);
   const insertImageAt = useCallback(
     async (slug, file, atPos, float) => {
       if (!file || !file.type.startsWith("image/")) return;
@@ -2168,6 +2227,8 @@ export default function App() {
             pages={visiblePages}
             aboutPage={pages.find((p) => p.slug === "__about__")}
             onSaveAbout={saveAbout}
+            onUploadPhoto={uploadAboutPhoto}
+            onRemovePhoto={removeAboutPhoto}
             onOpenPage={openPageHash}
           />
         ) : (
