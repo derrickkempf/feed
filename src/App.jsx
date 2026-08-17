@@ -518,12 +518,39 @@ function mdInline(text) {
   return out;
 }
 
-// blog-flavored body: blank line = paragraph · "## " heading · "> " quote
-function renderBody(body) {
-  return (body || "")
+// blog-flavored body: blank line = paragraph · "## " headings (H2–H5) · "> " quote
+// placement: "[[2]]" drops image #2 inline · "[[2<]]"/"[[2>]]" float it with text wrap
+// pull quotes: ">> text" floats right, "<< text" floats left (add "## " inside for Frankie)
+function renderBody(body, images = [], renderImage) {
+  const used = new Set();
+  const nodes = (body || "")
     .split(/\n\s*\n/)
     .filter(Boolean)
     .map((para, i) => {
+      const im = para.trim().match(/^\[\[(\d+)(<|>)?\]\]$/);
+      if (im) {
+        const idx = parseInt(im[1], 10) - 1;
+        const meta = images[idx];
+        if (!meta || !renderImage) return null;
+        used.add(idx);
+        const float = im[2] === "<" ? "left" : im[2] === ">" ? "right" : "inline";
+        return (
+          <div key={i} className={float === "inline" ? "dl-imginline" : `dl-float dl-float-${float}`}>
+            {renderImage(meta)}
+          </div>
+        );
+      }
+      if (para.startsWith(">> ") || para.startsWith("<< ")) {
+        const side = para.startsWith(">>") ? "right" : "left";
+        let inner = para.slice(3).replace(/^(>>|<<) ?/gm, "");
+        const big = inner.startsWith("## ");
+        if (big) inner = inner.slice(3);
+        return (
+          <blockquote key={i} className={`dl-quote dl-pull dl-pull-${side} ${big ? "dl-quote-big" : ""}`}>
+            <p>{mdInline(inner)}</p>
+          </blockquote>
+        );
+      }
       if (para.startsWith("##### ")) return <h5 className="dl-page-h5" key={i}>{mdInline(para.slice(6))}</h5>;
       if (para.startsWith("#### ")) return <h4 className="dl-page-h4" key={i}>{mdInline(para.slice(5))}</h4>;
       if (para.startsWith("### ")) return <h3 className="dl-page-h3" key={i}>{mdInline(para.slice(4))}</h3>;
@@ -544,6 +571,7 @@ function renderBody(body) {
       }
       return <p className="dl-page-text" key={i}>{mdInline(para)}</p>;
     });
+  return { nodes, used };
 }
 
 function videoEmbed(url) {
@@ -1257,13 +1285,23 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
   const setImageMode = (id, mode) =>
     onPatch(slug, {
       images: page.images.map((m) => {
-        const { url, ...rest } = m;
+        const { url, _i, ...rest } = m;
         return m.id === id ? { ...rest, mode } : rest;
       }),
     });
   const [edit, setEdit] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const addRef = useRef(null);
+  const bodyRendered = renderBody(page?.body, page?.images || [], (meta) => (
+    <figure className="dl-fig dl-page-fig" style={{ aspectRatio: `${meta.w} / ${meta.h}` }}>
+      <img src={meta.url} alt="" loading="lazy" draggable={false} />
+      {edit && (
+        <div className="dl-fig-actions" style={{ opacity: 1 }}>
+          <button className="dl-act" aria-label="Remove image" onClick={() => onRemoveImage(slug, meta.id)}>×</button>
+        </div>
+      )}
+    </figure>
+  ));
   useEffect(() => {
     window.scrollTo(0, 0);
     setEdit(false);
@@ -1304,18 +1342,18 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
           <>
             <input className="dl-page-title-input" value={page.title} placeholder="Page title" onChange={(e) => onPatch(slug, { title: e.target.value })} />
             <input className="dl-page-sub-input" value={page.subtitle || ""} placeholder="Year — medium, edition… (subtitle)" onChange={(e) => onPatch(slug, { subtitle: e.target.value })} />
-            <MdArea className="dl-page-text-input" value={page.body || ""} placeholder={"Write the post — highlight text for the formatting toolbar. Blank line = paragraph."} rows={10} allowBlocks onChange={(v) => onPatch(slug, { body: v })} />
+            <MdArea className="dl-page-text-input" value={page.body || ""} placeholder={"Write the post — highlight text for the toolbar. Blank line = paragraph · [[2]] places image #2 · [[2>]] floats it right · >> floated pull quote."} rows={10} allowBlocks onChange={(v) => onPatch(slug, { body: v })} />
           </>
         ) : (
           <>
             <h1 className="dl-page-title">{page.title}</h1>
             {page.subtitle && <p className="dl-page-sub">{page.subtitle}</p>}
-            {renderBody(page.body)}
+            {bodyRendered.nodes}
           </>
         )}
 
         <div className="dl-page-imgs">
-          {groupImages(page.images).map((g, gi) => {
+          {groupImages(page.images.map((m, i) => ({ ...m, _i: i })).filter((m) => !bodyRendered.used.has(m._i))).map((g, gi) => {
             const figs = g.items.map((m) => {
               const cls = g.mode === "wide" ? "dl-imgw-wide" : g.mode === "full" ? "dl-imgw-full" : "";
               const style =
@@ -1338,6 +1376,7 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
                       <div className="dl-fig-actions" style={{ opacity: 1 }}>
                         <button className="dl-act" aria-label="Remove image" onClick={() => onRemoveImage(slug, m.id)}>×</button>
                       </div>
+                      <span className="dl-imgnum" title={`Place in text with [[${m._i + 1}]] · [[${m._i + 1}<]] · [[${m._i + 1}>]]`}>{m._i + 1}</span>
                     </>
                   )}
                 </figure>
