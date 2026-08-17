@@ -19,7 +19,7 @@ const SNAP = 2;
 const SIZES = [22, 32, 46, 64];
 const SITE_NAME = "Derrick Kempf";
 const SITE_TAGLINE = "Artist & Brand Identity Designer";
-const SITE_HERO = ["A daily record of", "what I'm making"];
+const SITE_HERO = ["Art feed"];
 const SOCIALS = [
   { label: "X", url: "https://x.com/derrickkempf" },
   { label: "Instagram", url: "https://instagram.com/derrickkempf" },
@@ -135,22 +135,48 @@ function resolveLayout(day, cols) {
   const colW = (100 - gap * (cols + 1)) / cols;
   const colY = new Array(cols).fill(0);
   const out = new Map();
+  const colX = (c) => gap + c * (colW + gap);
+  // reserve space under everything already placed by hand
+  const reserve = (fx, fy, fw, fh) => {
+    for (let c = 0; c < cols; c++) {
+      if (fx < colX(c) + colW && fx + fw > colX(c)) {
+        colY[c] = Math.max(colY[c], (fy || 0) + fh + gap);
+      }
+    }
+  };
   for (const m of day.images) {
     if (m.fx != null) {
-      out.set(m.id, { fx: m.fx, fy: m.fy, fw: m.fw ?? 30 });
-    } else {
-      const c = colY.indexOf(Math.min(...colY));
-      const fw = colW;
-      const fx = gap + c * (colW + gap);
-      const fy = colY[c];
-      const fh = fw / (m.w / m.h);
-      colY[c] = fy + fh + gap;
-      out.set(m.id, { fx, fy, fw });
+      const fw = m.fw ?? 30;
+      const fh = fw / (m.w && m.h ? m.w / m.h : 4 / 3) + (m.cap ? 4 : 0);
+      out.set(m.id, { fx: m.fx, fy: m.fy || 0, fw });
+      reserve(m.fx, m.fy, fw, fh);
     }
   }
-  (day.notes || []).forEach((n, i) => {
-    out.set(n.id, { fx: n.fx ?? 4, fy: n.fy ?? 2 + i * 6, fw: n.fw ?? 28 });
-  });
+  for (const n of day.notes || []) {
+    if (n.fx != null) {
+      const fw = n.fw ?? 28;
+      out.set(n.id, { fx: n.fx, fy: n.fy || 0, fw });
+      reserve(n.fx, n.fy, fw, 10);
+    }
+  }
+  // new items flow into the shortest remaining column, below placed work
+  for (const m of day.images) {
+    if (m.fx != null) continue;
+    const c = colY.indexOf(Math.min(...colY));
+    const fw = colW;
+    const fy = colY[c];
+    const fh = fw / (m.w && m.h ? m.w / m.h : 4 / 3) + (m.cap ? 4 : 0);
+    colY[c] = fy + fh + gap;
+    out.set(m.id, { fx: colX(c), fy, fw });
+  }
+  let noteStagger = 0;
+  for (const n of day.notes || []) {
+    if (n.fx != null) continue;
+    const c = colY.indexOf(Math.min(...colY));
+    out.set(n.id, { fx: colX(c), fy: colY[c], fw: n.fw ?? 28 });
+    colY[c] += 12;
+    noteStagger++;
+  }
   return out;
 }
 
@@ -414,8 +440,8 @@ function PageLinkEditor({ meta, pages, onLink, onCreateAndLink, onClose }) {
 }
 
 // ---------- canvas items ----------
-function CanvasImg({ meta, pos, canEdit, drag, onDragStart, onOpen, onCycleSize, onEdit, onDelete, editorOpen, editors }) {
-  const isDragging = drag && drag.id === meta.id;
+function CanvasImg({ meta, pos, canEdit, drag, resizing, onDragStart, onResizeStart, onOpen, onCycleSize, onEdit, onDelete, editorOpen, editors }) {
+  const isDragging = (drag && drag.id === meta.id) || resizing;
   const style = {
     left: `${pos.fx}%`,
     top: `${pos.top}px`,
@@ -441,6 +467,18 @@ function CanvasImg({ meta, pos, canEdit, drag, onDragStart, onOpen, onCycleSize,
             <span className="dl-hoverbar-btn">{meta.product ? "Shop" : "View"}</span>
           </div>
         )}
+      {canEdit && !editorOpen && (
+        <span
+          className="dl-resize"
+          title="Drag to scale"
+          aria-label="Drag to scale image"
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            onResizeStart(e, meta.id);
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
       </span>
       {meta.cap && <figcaption className="dl-itemcap">{meta.cap}</figcaption>}
       {canEdit && !editorOpen && (
@@ -501,11 +539,13 @@ function CanvasNote({ note, pos, canEdit, drag, onDragStart, onEditText, onDelet
 }
 
 // ---------- day canvas ----------
-function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, onAddNote, onLayout, onOpenDetail, onCycleSize, onDeleteImage, onEditNoteText, onDeleteNote, editing, setEditing, onSaveTags, onSaveProduct, onLinkPage, onCreatePage }) {
+function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, onPickDay, onAddNote, onLayout, onOpenDetail, onCycleSize, onDeleteImage, onEditNoteText, onDeleteNote, editing, setEditing, onSaveTags, onSaveProduct, onLinkPage, onCreatePage }) {
   const [wrapRef, width] = useWidth();
   const [drag, setDrag] = useState(null);
   const dragRef = useRef(null);
   dragRef.current = drag;
+  const justDragged = useRef(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   const flat = filterOn || isMobile;
   const layout = useMemo(() => {
@@ -531,11 +571,35 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
     return max + 2;
   }, [day, layout]);
 
+  // measure the true rendered bottom of every item — estimates can lie
+  // (long captions, tall notes), and the day must always contain its content
+  const [contentH, setContentH] = useState(0);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || flat) return;
+    const measure = () => {
+      let max = 0;
+      for (const c of el.children) max = Math.max(max, c.offsetTop + c.offsetHeight);
+      setContentH(max);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    for (const c of el.children) ro.observe(c);
+    return () => ro.disconnect();
+  }, [layout, day, width, flat]);
+
+
   const onDragStart = (e, id, kind) => {
     if (e.button !== 0) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
-    setDrag({ id, kind, startX: e.clientX, startY: e.clientY, dx: 0, dy: 0, moved: false });
+    setDrag({ id, kind, mode: "move", startX: e.clientX, startY: e.clientY, dx: 0, dy: 0, moved: false });
   };
+  const onResizeStart = (e, id) => {
+    if (e.button !== 0) return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    setDrag({ id, kind: "img", mode: "resize", startX: e.clientX, startY: e.clientY, dx: 0, dy: 0, moved: false });
+  };
+  const liveFw = (p, d) => clamp(snapv(p.fw + (d.dx / (width || 1)) * 100), 10, Math.max(10, 100 - p.fx));
   useEffect(() => {
     if (!drag) return;
     const move = (e) => {
@@ -549,9 +613,17 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
     };
     const up = () => {
       const d = dragRef.current;
+      if (d && d.moved) {
+        justDragged.current = true;
+        setTimeout(() => {
+          justDragged.current = false;
+        }, 300);
+      }
       if (d && d.moved && width > 0) {
         const p = layout.get(d.id);
-        if (p) {
+        if (p && d.mode === "resize") {
+          onLayout(day.date, d.id, d.kind, { fx: p.fx, fy: p.fy, fw: liveFw(p, d) }, layout);
+        } else if (p) {
           const fx = clamp(snapv(p.fx + (d.dx / width) * 100), 0, 100 - p.fw);
           const fy = Math.max(0, snapv(p.fy + (d.dy / width) * 100));
           onLayout(day.date, d.id, d.kind, { fx, fy, fw: p.fw }, layout);
@@ -581,7 +653,17 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
     <section className="dl-day">
       <header className="dl-dayhead">
         <span className="dl-daylabel">{dayLabel(day.date)}</span>
-        {canEdit && !filterOn && <button className="dl-addnote" onClick={() => onAddNote(day.date)}>+ note</button>}
+        {canEdit && !filterOn && (
+          <span className="dl-dayadd">
+            <button className={`dl-plus ${addOpen ? "dl-plus-on" : ""}`} aria-label="Add to this day" aria-expanded={addOpen} onClick={() => setAddOpen((o) => !o)}>+</button>
+            {addOpen && (
+              <span className="dl-plusmenu">
+                <button onClick={() => { setAddOpen(false); onPickDay(day.date); }}>Image</button>
+                <button onClick={() => { setAddOpen(false); onAddNote(day.date); }}>Note</button>
+              </span>
+            )}
+          </span>
+        )}
       </header>
 
       {empty && isToday && canEdit && !filterOn ? (
@@ -614,19 +696,24 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
           ))}
         </div>
       ) : (
-        <div ref={wrapRef} className={`dl-canvas ${canEdit ? "dl-canvas-edit" : ""}`} style={{ height: `${(heightPct / 100) * (width || 1)}px` }}>
+        <div ref={wrapRef} className={`dl-canvas ${canEdit ? "dl-canvas-edit" : ""}`} style={{ height: `${contentH || (heightPct / 100) * (width || 1)}px` }}>
           {day.images.map((m) => {
             const kindOpen = editing && editing.date === day.date && editing.id === m.id;
             return (
               <CanvasImg
                 key={m.id}
                 meta={m}
-                pos={layout.get(m.id) || { fx: 4, fy: 2, fw: 30, top: 0 }}
+                pos={(() => {
+                  const p = layout.get(m.id) || { fx: 4, fy: 2, fw: 30, top: 0 };
+                  return drag && drag.moved && drag.mode === "resize" && drag.id === m.id ? { ...p, fw: liveFw(p, drag) } : p;
+                })()}
                 canEdit={canEdit}
-                drag={drag && drag.moved ? drag : null}
+                drag={drag && drag.moved && drag.mode === "move" ? drag : null}
+                resizing={Boolean(drag && drag.moved && drag.mode === "resize" && drag.id === m.id)}
                 onDragStart={onDragStart}
+                onResizeStart={onResizeStart}
                 onOpen={(meta) => {
-                  if (dragRef.current?.moved) return;
+                  if (dragRef.current?.moved || justDragged.current) return;
                   onOpenDetail(day.date, meta);
                 }}
                 onCycleSize={(id) => onCycleSize(day.date, id, layout)}
@@ -643,7 +730,7 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, onPick, o
               note={n}
               pos={layout.get(n.id) || { fx: 4, fy: 2, fw: 28, top: 0 }}
               canEdit={canEdit}
-              drag={drag && drag.moved ? drag : null}
+              drag={drag && drag.moved && drag.mode === "move" ? drag : null}
               onDragStart={onDragStart}
               onEditText={(id, text) => onEditNoteText(day.date, id, text)}
               onDelete={(id) => onDeleteNote(day.date, id)}
@@ -676,9 +763,7 @@ function AboutPage({ canEdit, pages, onOpenPage }) {
   }, []);
   return (
     <div className="dl-page">
-      <div className="dl-page-top">
-        <Crumbs trail={[{ label: "Feed", onGo: closePageHash }, { label: "About" }]} />
-      </div>
+
       <div className="dl-about">
         <h1 className="dl-work-title dl-about-title">About</h1>
         <div className="dl-about-cols">
@@ -725,20 +810,7 @@ function AboutPage({ canEdit, pages, onOpenPage }) {
   );
 }
 
-// ---------- breadcrumbs / work / pages ----------
-function Crumbs({ trail }) {
-  return (
-    <nav className="dl-crumbs" aria-label="Breadcrumb">
-      {trail.map((c, i) => (
-        <span key={i} className="dl-crumb-wrap">
-          {i > 0 && <span className="dl-crumb-sep">/</span>}
-          {c.onGo ? <button className="dl-crumb" onClick={c.onGo}>{c.label}</button> : <span className="dl-crumb dl-crumb-here">{c.label}</span>}
-        </span>
-      ))}
-    </nav>
-  );
-}
-
+// ---------- work / pages ----------
 function WorkIndex({ pages, onOpen }) {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -749,9 +821,7 @@ function WorkIndex({ pages, onOpen }) {
   };
   return (
     <div className="dl-page">
-      <div className="dl-page-top">
-        <Crumbs trail={[{ label: "Feed", onGo: closePageHash }, { label: "Works" }]} />
-      </div>
+
       <div className="dl-work">
         <h1 className="dl-work-title">Works</h1>
         {pages.length === 0 ? (
@@ -790,9 +860,6 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
   if (!page) {
     return (
       <div className="dl-page">
-        <div className="dl-page-top">
-          <Crumbs trail={[{ label: "Feed", onGo: onBack }, { label: "Work", onGo: openWorkHash }, { label: "?" }]} />
-        </div>
         <p className="dl-loading">That page doesn't exist (anymore).</p>
       </div>
     );
@@ -801,7 +868,6 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
   return (
     <div className="dl-page">
       <div className="dl-page-top">
-        <Crumbs trail={[{ label: "Feed", onGo: onBack }, { label: "Work", onGo: openWorkHash }, { label: page.title }]} />
         {canEdit && (
           <div className="dl-page-tools">
             <button className="dl-back" onClick={() => setEdit((e) => !e)}>{edit ? "Done editing" : "Edit page"}</button>
@@ -1046,7 +1112,7 @@ export default function App() {
     setDays((ds) => ds?.map((d) => ({ ...d, notes: (d.notes || []).map((n) => (n.id === id ? { ...n, ...patch } : n)) })));
 
   const addFiles = useCallback(
-    async (fileList) => {
+    async (fileList, targetDate) => {
       const files = Array.from(fileList || []).filter((f) => f.type.startsWith("image/"));
       if (!files.length) {
         say("Only image files land here.");
@@ -1054,7 +1120,7 @@ export default function App() {
       }
       setBusy(true);
       try {
-        const date = todayStr();
+        const date = targetDate || todayStr();
         let added = 0;
         for (const f of files) {
           try {
@@ -1067,7 +1133,7 @@ export default function App() {
         }
         if (added) {
           await refresh();
-          say(added === 1 ? "Added to today." : `Added ${added} to today.`);
+          say(`Added ${added === 1 ? "" : added + " "}to ${date === todayStr() ? "today" : dayLabel(date)}.`);
         }
       } finally {
         setBusy(false);
@@ -1370,7 +1436,32 @@ export default function App() {
     return () => window.removeEventListener("keydown", k);
   }, [switchMode, canEdit, detail]);
 
-  const pick = () => fileRef.current?.click();
+  const dayTarget = useRef(null);
+  const pick = () => {
+    dayTarget.current = null;
+    fileRef.current?.click();
+  };
+  const pickForDay = (date) => {
+    dayTarget.current = date;
+    fileRef.current?.click();
+  };
+
+  // Ghost-style: pasting an image from the clipboard posts it to today
+  useEffect(() => {
+    if (!canEdit) return;
+    const onPaste = (e) => {
+      if (routeRef.current) return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      const files = Array.from(e.clipboardData?.files || []).filter((f) => f.type.startsWith("image/"));
+      if (files.length) {
+        e.preventDefault();
+        addFiles(files);
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [canEdit, addFiles]);
 
   // mobile login: 5 quick taps on the wordmark
   const tapRef = useRef({ n: 0, t: 0 });
@@ -1388,7 +1479,7 @@ export default function App() {
   const siteHeader = (
     <header className="dl-top">
       <div className="dl-toprow">
-        <span className="dl-mark" onClick={markTap}>{SITE_NAME}</span>
+        <button className="dl-mark" onClick={() => { markTap(); if (route) closePageHash(); }}>{SITE_NAME}</button>
         <span className="dl-tagline">{SITE_TAGLINE}</span>
         <nav className="dl-topright">
           {canEdit && !route && <button className="dl-add" onClick={pick}>+ Add</button>}
@@ -1430,14 +1521,17 @@ export default function App() {
 
   return (
     <div className="dl-root">
-      <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+      <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => { addFiles(e.target.files, dayTarget.current || undefined); dayTarget.current = null; e.target.value = ""; }} />
 
       {siteHeader}
 
       <h1 className="dl-hero">
-        {SITE_HERO[0]}
-        <br />
-        {SITE_HERO[1]}
+        {SITE_HERO.map((line, i) => (
+          <span key={i}>
+            {i > 0 && <br />}
+            {line}
+          </span>
+        ))}
       </h1>
 
       <main className="dl-scroll">
@@ -1465,6 +1559,7 @@ export default function App() {
               isMobile={isMobile}
               pages={pages}
               onPick={pick}
+              onPickDay={pickForDay}
               onAddNote={addNote}
               onLayout={persistLayout}
               onOpenDetail={(date, m) => setDetail({ date, id: m.id })}

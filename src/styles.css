@@ -59,9 +59,11 @@ html { scroll-behavior: smooth; }
   gap: 16px; padding: 22px 48px 16px;
 }
 .dl-mark {
-  font-family: var(--sign); font-size: 15px; letter-spacing: 0.14em;
-  text-transform: uppercase; cursor: default; user-select: none;
+  font-family: var(--sign); font-size: 15px; letter-spacing: 0.1em;
+  text-transform: uppercase; cursor: pointer; user-select: none;
+  background: none; border: none; padding: 0; color: var(--ink);
 }
+.dl-mark:hover { text-decoration: underline; text-underline-offset: 5px; }
 .dl-tagline {
   position: absolute; left: 50%; transform: translateX(-50%);
   font-family: var(--type); font-size: 10.5px; letter-spacing: 0.08em;
@@ -70,7 +72,7 @@ html { scroll-behavior: smooth; }
 @media (max-width: 900px) { .dl-tagline { display: none; } }
 .dl-topright { display: flex; align-items: center; gap: 26px; }
 .dl-navlink {
-  font-family: var(--sign); font-size: 13px; letter-spacing: 0.14em;
+  font-family: var(--sign); font-size: 15px; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--ink);
   background: none; border: none; padding: 4px 0; cursor: pointer;
 }
@@ -84,7 +86,7 @@ html { scroll-behavior: smooth; }
 .dl-navlink:focus-visible, .dl-add:focus-visible, .dl-filtericon:focus-visible,
 .dl-chip:focus-visible, .dl-clear:focus-visible, .dl-stage:focus-visible,
 .dl-act:focus-visible, .dl-modal-x:focus-visible, .dl-minitag:focus-visible,
-.dl-back:focus-visible, .dl-crumb:focus-visible, .dl-buy:focus-visible,
+.dl-back:focus-visible, .dl-buy:focus-visible,
 .dl-backup-btn:focus-visible, .dl-work-card:focus-visible, .dl-login-btn:focus-visible {
   outline: 2px solid var(--ink); outline-offset: 2px;
 }
@@ -157,7 +159,7 @@ html { scroll-behavior: smooth; }
 .dl-dayhead > * { pointer-events: auto; }
 @media (max-width: 700px) { .dl-dayhead { top: 58px; } }
 .dl-daylabel {
-  font-family: var(--sign); font-size: 14px; letter-spacing: 0.16em;
+  font-family: var(--sign); font-size: 14px; letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .dl-addnote {
@@ -166,6 +168,25 @@ html { scroll-behavior: smooth; }
 }
 .dl-addnote:hover { color: var(--ink); background: #ececea; }
 .dl-count { margin-left: auto; font-family: var(--type); font-size: 12px; color: var(--mute); }
+
+
+/* ghost-style per-day add */
+.dl-dayadd { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+.dl-plus {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid #c9c9c5; background: transparent; color: var(--mute);
+  font-size: 15px; line-height: 1; cursor: pointer; padding: 0;
+  transition: transform .15s ease, color .15s, border-color .15s;
+}
+.dl-plus:hover, .dl-plus-on { border-color: var(--ink); color: var(--ink); }
+.dl-plus-on { transform: rotate(45deg); }
+.dl-plusmenu { display: inline-flex; gap: 6px; }
+.dl-plusmenu button {
+  font-family: var(--sign); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--paper); color: var(--ink); cursor: pointer;
+}
+.dl-plusmenu button:hover { border-color: var(--ink); }
 
 /* today's empty stage */
 .dl-stage {
@@ -261,6 +282,18 @@ html { scroll-behavior: smooth; }
 }
 .dl-minitag:hover { background: var(--ink); color: var(--paper); }
 
+
+/* resize handle (edit mode) */
+.dl-resize {
+  position: absolute; right: 8px; bottom: 8px; width: 18px; height: 18px; z-index: 3;
+  background: rgba(0,0,0,.5); border-radius: 4px;
+  border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+  cursor: nwse-resize; opacity: 0; transition: opacity .15s;
+  touch-action: none;
+}
+.dl-item:hover .dl-resize, .dl-imgbox:hover .dl-resize, .dl-item-drag .dl-resize { opacity: 1; }
+@media (hover: none) { .dl-resize { opacity: 1; } }
+
 /* editors */
 .dl-tagedit, .dl-prodedit {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 4;
@@ -289,17 +322,6 @@ html { scroll-behavior: smooth; }
   border: 1px solid var(--line); border-radius: 4px;
   background: var(--paper); padding: 6px 8px;
 }
-
-/* ===== breadcrumbs ===== */
-.dl-crumbs { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.dl-crumb-wrap { display: inline-flex; align-items: center; gap: 10px; }
-.dl-crumb-sep { color: var(--mute); font-size: 12px; }
-.dl-crumb {
-  font-family: var(--sign); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase;
-  cursor: pointer; border: none; background: none; padding: 4px 0; color: var(--ink);
-}
-.dl-crumb:hover { text-decoration: underline; text-underline-offset: 5px; }
-.dl-crumb-here { cursor: default; color: var(--mute); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ===== work index ===== */
 .dl-page { min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
@@ -385,10 +407,10 @@ html { scroll-behavior: smooth; }
 }
 .dl-footer a, .dl-footer span { pointer-events: auto; }
 @media (max-width: 700px) { .dl-footer { padding: 12px 24px 14px; } }
-.dl-footer-c { font-family: var(--sign); font-size: 13px; letter-spacing: 0.14em; }
+.dl-footer-c { font-family: var(--sign); font-size: 13px; letter-spacing: 0.1em; }
 .dl-footer-links { display: flex; gap: 18px; }
 .dl-footer-links a {
-  font-family: var(--sign); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--sign); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ink); text-decoration: none;
 }
 .dl-footer-links a:hover { text-decoration: underline; text-underline-offset: 4px; }
