@@ -355,7 +355,7 @@ html { scroll-behavior: smooth; }
 /* spotlight: hovering one card dims the rest */
 .dl-work-grid .dl-work-card { transition: opacity .25s ease; }
 .dl-work-grid:has(.dl-work-card:hover) .dl-work-card { opacity: .4; }
-.dl-work-grid .dl-work-card:hover { opacity: 1; }
+.dl-work-grid:has(.dl-work-card:hover) .dl-work-card:hover { opacity: 1; }
 
 .dl-work-card-more {
   font-family: var(--sign); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
@@ -372,6 +372,7 @@ html { scroll-behavior: smooth; }
 .dl-page-text { font-family: var(--type); max-width: none; margin: 0 0 18px; color: #222; font-size: 16px; line-height: 1.75; }
 .dl-page-imgs { margin-top: 38px; display: flex; flex-direction: column; gap: 30px; }
 .dl-page-fig { cursor: default; overflow: hidden; max-width: 100%; }
+.dl-page-fig.dl-imgw-wide, .dl-page-fig.dl-imgw-full { max-width: none; }
 /* ===== post image modes (regular · wide · full · gallery · slider) ===== */
 .dl-imgw-wide { width: min(1280px, calc(100vw - 80px)); margin-left: 50%; transform: translateX(-50%); }
 .dl-imgw-full { width: 100vw; margin-left: 50%; transform: translateX(-50%); }
@@ -414,7 +415,7 @@ html { scroll-behavior: smooth; }
 .dl-about-img { background: var(--block); aspect-ratio: 6 / 5; width: 100%; }
 .dl-about-text { font-family: var(--type); font-size: 15px; line-height: 1.75; max-width: 62ch; padding-top: 40px; }
 .dl-about-text p { margin: 0 0 22px; }
-.dl-about-hello { font-style: italic; }
+.dl-about-text p:first-of-type { font-style: italic; }
 .dl-about-mail { color: var(--ink); }
 .dl-about-owner { border-top: 1px solid var(--line); margin-top: 40px; padding-top: 24px; }
 .dl-pagelist a { color: var(--ink); }
@@ -664,7 +665,8 @@ html { scroll-behavior: smooth; }
 
 
 /* end-of-scroll mark */
-.dl-endmark { display: block; margin: 30px auto 20px; width: min(340px, 62vw); height: auto; }
+.dl-endmark { display: block; margin: 20px auto 4px; width: min(340px, 62vw); height: auto; }
+@media (min-width: 900px) { .dl-endmark { width: 600px; margin: 16px auto 0; } }
 
 
 /* magazine floats in posts */
@@ -690,6 +692,24 @@ html { scroll-behavior: smooth; }
 @media (max-width: 640px) {
   .dl-float, .dl-pull { float: none; width: 100%; margin-left: 0; margin-right: 0; }
 }
+
+
+/* slider nav arrows */
+.dl-slider-wrap { position: relative; }
+.dl-slider-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 4;
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: rgba(249,249,249,.9); box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.dl-slider-arrow svg { width: 20px; height: auto; fill: var(--ink); }
+.dl-slider-arrow-prev { left: 12px; }
+.dl-slider-arrow-next { right: 12px; }
+.dl-slider-arrow:disabled { opacity: .3; cursor: default; }
+
+
+.dl-insertrow { margin-top: 16px; text-align: center; }
+.dl-insertrow .dl-addrow-mode { justify-content: center; margin-top: 8px; }
 
 /* ===== drop wash / toasts ===== */
 .dl-wash { position: fixed; inset: 0; z-index: 40; pointer-events: none; background: rgba(249,249,249,.93); display: flex; align-items: center; justify-content: center; }

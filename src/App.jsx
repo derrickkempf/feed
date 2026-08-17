@@ -679,7 +679,7 @@ function BlockBody({ note, pages, snippets, onOpenPage }) {
   return <p className="dl-note-text">{mdInline(note.text)}</p>;
 }
 
-function MdArea({ value, onChange, rows, placeholder, autoFocus, allowBlocks, className }) {
+function MdArea({ value, onChange, rows, placeholder, autoFocus, allowBlocks, className, onCursor }) {
   const ref = useRef(null);
   const [sel, setSel] = useState(null);
   const [linkMode, setLinkMode] = useState(false);
@@ -689,6 +689,7 @@ function MdArea({ value, onChange, rows, placeholder, autoFocus, allowBlocks, cl
     if (!el) return;
     const s = el.selectionStart;
     const e = el.selectionEnd;
+    onCursor?.(e);
     if (e > s) setSel({ start: s, end: e });
     else {
       setSel(null);
@@ -770,6 +771,8 @@ function MdArea({ value, onChange, rows, placeholder, autoFocus, allowBlocks, cl
         autoFocus={autoFocus}
         onChange={(e) => onChange(e.target.value)}
         onSelect={update}
+        onKeyUp={update}
+        onClick={update}
         onBlur={() => setTimeout(() => { setSel(null); setLinkMode(false); }, 200)}
       />
     </span>
@@ -1144,10 +1147,18 @@ function Footer() {
 }
 
 // ---------- about page ----------
-function AboutPage({ canEdit, pages, onOpenPage }) {
+function AboutPage({ canEdit, pages, aboutPage, onSaveAbout, onOpenPage }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+  const DEFAULT_BIO =
+    "Hello!\n\nI'm Derrick Kempf, an artist and brand identity designer with over two decades of experience shaping brands and translating vision into meaningful design. I bring a balance of discipline and creative freedom to both brand consulting and personal art, and I am dedicated to helping fellow artists find simplicity and joy in the creative process. I love drawing and the subjects I illustrate typically consist of weird, balding men, or Dewds, as I call them. See more of them out at dewd.cool.\n\nLet's make something cool together.\n\n[Email me](mailto:hello@derrickkempf.com) or connect with me on socials.";
+  const [editingAbout, setEditingAbout] = useState(false);
+  const [draft, setDraft] = useState(aboutPage?.body || DEFAULT_BIO);
+  useEffect(() => {
+    setDraft(aboutPage?.body || DEFAULT_BIO);
+  }, [aboutPage?.body]);
+  const body = aboutPage?.body || DEFAULT_BIO;
   return (
     <div className="dl-page">
 
@@ -1156,23 +1167,24 @@ function AboutPage({ canEdit, pages, onOpenPage }) {
         <div className="dl-about-cols">
           <div className="dl-about-img" aria-hidden="true" />
           <div className="dl-about-text">
-            <p className="dl-about-hello">Hello!</p>
-            <p>
-              I'm Derrick Kempf, an artist and brand identity designer with over
-              two decades of experience shaping brands and translating vision
-              into meaningful design. I bring a balance of discipline and
-              creative freedom to both brand consulting and personal art, and I
-              am dedicated to helping fellow artists find simplicity and joy in
-              the creative process. I love drawing and the subjects I illustrate
-              typically consist of weird, balding men, or Dewds, as I call them.
-              See more of them out at dewd.cool.
-            </p>
-            <p>Let's make something cool together.</p>
-            <p>
-              <a className="dl-about-mail" href="mailto:hello@derrickkempf.com">Email me</a> or connect with me on socials.
-            </p>
+            {canEdit && editingAbout ? (
+              <>
+                <MdArea className="dl-page-text-input" value={draft} rows={9} allowBlocks onChange={setDraft} />
+                <p className="dl-prodedit-row">
+                  <button className="dl-prodedit-save" onClick={() => { onSaveAbout(draft); setEditingAbout(false); }}>Save</button>
+                  <button className="dl-back" onClick={() => { setDraft(body); setEditingAbout(false); }}>Cancel</button>
+                </p>
+              </>
+            ) : (
+              renderBody(body).nodes
+            )}
             {canEdit && (
               <div className="dl-about-owner">
+                {!editingAbout && (
+                  <p>
+                    <button className="dl-back" onClick={() => setEditingAbout(true)}>Edit this page</button>
+                  </p>
+                )}
                 <p className="dl-split-label">Pages</p>
                 {pages.length ? (
                   <p className="dl-pagelist">
@@ -1196,7 +1208,6 @@ function AboutPage({ canEdit, pages, onOpenPage }) {
     </div>
   );
 }
-
 // ---------- work / pages ----------
 function WorkIndex({ pages, onOpen, canEdit, onCreate }) {
   useEffect(() => {
@@ -1267,6 +1278,47 @@ function PostNav({ pages, slug }) {
   );
 }
 
+function Slider({ children }) {
+  const ref = useRef(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+  const update = () => {
+    const el = ref.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 4);
+    setAtEnd(el.scrollLeft >= el.scrollWidth - el.clientWidth - 4);
+  };
+  useEffect(() => {
+    update();
+    const el = ref.current;
+    if (!el) return;
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
+  const go = (dir) => {
+    const el = ref.current;
+    if (!el) return;
+    const step = Math.min(el.clientWidth * 0.8, 480);
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+  return (
+    <div className="dl-slider-wrap">
+      <div className="dl-slider" ref={ref}>{children}</div>
+      <button className="dl-slider-arrow dl-slider-arrow-prev" aria-label="Previous" disabled={atStart} onClick={() => go(-1)}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.59 22.05"> <g id="Layer_1-2" data-name="Layer 1"> <path d="M19.4,16.36c-.13-1.69-.3-3.39-.24-5.09.11-3.18.52-6.25.41-9.46-.02-.48-.02-1.08-.24-1.48l-.09-.13c-.86-.65-2.11.41-3.01.88-1.23.83-2.42,1.41-3.78,1.98-3.34,1.54-6.61,3.52-9.99,5.21-1.08.57-2.89,1.56-2.39,3.26.56,1.53,2.16,2.01,3.36,2.69,5.1,2.61,10.11,5.91,15.35,7.83.94-.32.72-1.9.76-2.87,0-.94-.07-1.88-.15-2.82Z"/> </g> </svg>
+      </button>
+      <button className="dl-slider-arrow dl-slider-arrow-next" aria-label="Next" disabled={atEnd} onClick={() => go(1)}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.76 21.93"> <g id="Layer_1-2" data-name="Layer 1"> <path d="M19.12,9.55l-.16-.17c-3.46-2.47-7.42-4.05-11.06-6.14C5.63,2.28,3.32.31.94,0,.55.12.35.59.27,1.06c-.59,3.27-.03,6.58.05,9.87s-.23,6.47-.15,9.73c.08.86.5,1.45,1.34,1.21,4.59-1.86,8.87-4.61,13.37-6.85,1.76-1.04,6.59-2.29,4.22-5.47Z"/> </g> </svg>
+      </button>
+    </div>
+  );
+}
+
 const IMG_MODES = ["regular", "wide", "full", "gallery", "slider"];
 function groupImages(images) {
   const groups = [];
@@ -1279,7 +1331,7 @@ function groupImages(images) {
   return groups;
 }
 
-function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemoveImage, onDeletePage }) {
+function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onInsertImage, onRemoveImage, onDeletePage }) {
   const page = pages.find((p) => p.slug === slug);
   const [addMode, setAddMode] = useState("regular");
   const setImageMode = (id, mode) =>
@@ -1292,6 +1344,9 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
   const [edit, setEdit] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const addRef = useRef(null);
+  const insertRef = useRef(null);
+  const [cursorPos, setCursorPos] = useState((page?.body || "").length);
+  const [insertFloat, setInsertFloat] = useState("inline");
   const bodyRendered = renderBody(page?.body, page?.images || [], (meta) => (
     <figure className="dl-fig dl-page-fig" style={{ aspectRatio: `${meta.w} / ${meta.h}` }}>
       <img src={meta.url} alt="" loading="lazy" draggable={false} />
@@ -1342,7 +1397,7 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
           <>
             <input className="dl-page-title-input" value={page.title} placeholder="Page title" onChange={(e) => onPatch(slug, { title: e.target.value })} />
             <input className="dl-page-sub-input" value={page.subtitle || ""} placeholder="Year — medium, edition… (subtitle)" onChange={(e) => onPatch(slug, { subtitle: e.target.value })} />
-            <MdArea className="dl-page-text-input" value={page.body || ""} placeholder={"Write the post — highlight text for the toolbar. Blank line = paragraph · [[2]] places image #2 · [[2>]] floats it right · >> floated pull quote."} rows={10} allowBlocks onChange={(v) => onPatch(slug, { body: v })} />
+            <MdArea className="dl-page-text-input" value={page.body || ""} placeholder={"Write the post — highlight text for the toolbar. Blank line = paragraph · [[2]] places image #2 · [[2>]] floats it right · >> floated pull quote."} rows={10} allowBlocks onChange={(v) => onPatch(slug, { body: v })} onCursor={setCursorPos} />
           </>
         ) : (
           <>
@@ -1383,7 +1438,7 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
               );
             });
             if (g.mode === "gallery") return <div className="dl-gal" key={gi}>{figs}</div>;
-            if (g.mode === "slider") return <div className="dl-slider" key={gi}>{figs}</div>;
+            if (g.mode === "slider") return <Slider key={gi}>{figs}</Slider>;
             return figs;
           })}
         </div>
@@ -1401,6 +1456,16 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
                 e.target.value = "";
               }}
             />
+            <input
+              ref={insertRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                if (e.target.files?.[0]) onInsertImage(slug, e.target.files[0], cursorPos, insertFloat);
+                e.target.value = "";
+              }}
+            />
             <div className="dl-addrow">
               <button className="dl-stage dl-page-add" onClick={() => addRef.current?.click()}>+ Add images to this page</button>
               <label className="dl-addrow-mode">
@@ -1409,6 +1474,18 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
                   {IMG_MODES.map((x) => <option key={x} value={x}>{x}</option>)}
                 </select>
               </label>
+            </div>
+            <div className="dl-insertrow">
+              <button className="dl-stage dl-page-add" onClick={() => insertRef.current?.click()}>+ Insert image where I'm writing</button>
+              <label className="dl-addrow-mode">
+                float
+                <select value={insertFloat} onChange={(e) => setInsertFloat(e.target.value)}>
+                  <option value="inline">inline</option>
+                  <option value="left">left, text wraps</option>
+                  <option value="right">right, text wraps</option>
+                </select>
+              </label>
+              <p className="dl-hint">Click in the text above to set where it lands, then insert.</p>
             </div>
           </>
         )}
@@ -1423,6 +1500,7 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
 export default function App() {
   const [days, setDays] = useState(null);
   const [pages, setPages] = useState([]);
+  const visiblePages = pages.filter((p) => p.slug !== "__about__");
   const [snippets, setSnippets] = useState([]);
   const [route, setRoute] = useState(() => parseHash());
   const [dragging, setDragging] = useState(false);
@@ -1860,6 +1938,48 @@ export default function App() {
       await be.patchPage(slug, patch);
     } catch {}
   }, []);
+  const saveAbout = useCallback(
+    async (body) => {
+      const exists = pages.some((p) => p.slug === "__about__");
+      try {
+        if (!exists) {
+          await be.createPage({ slug: "__about__", title: "About", subtitle: "", body });
+          await refresh();
+        } else {
+          await patchPage("__about__", { body });
+        }
+        say("About page saved.");
+      } catch {
+        say("Couldn't save the About page.");
+      }
+    },
+    [pages, patchPage, refresh, say]
+  );
+  const insertImageAt = useCallback(
+    async (slug, file, atPos, float) => {
+      if (!file || !file.type.startsWith("image/")) return;
+      setBusy(true);
+      try {
+        const page = pages.find((p) => p.slug === slug);
+        const idx = (page?.images || []).length;
+        const { blob, w, h } = await compressFile(file);
+        await be.addPageImage({ slug, id: uid(), blob, w, h, mode: "regular" });
+        const body = page?.body || "";
+        const pos = Math.max(0, Math.min(atPos ?? body.length, body.length));
+        const token = float === "left" ? `[[${idx + 1}<]]` : float === "right" ? `[[${idx + 1}>]]` : `[[${idx + 1}]]`;
+        const before = body.slice(0, pos).replace(/\n*$/, "");
+        const after = body.slice(pos).replace(/^\n*/, "");
+        const newBody = [before, token, after].filter(Boolean).join("\n\n");
+        await patchPage(slug, { body: newBody });
+        await refresh();
+        say("Image placed.");
+      } catch {
+        say("Couldn't insert that image.");
+      }
+      setBusy(false);
+    },
+    [pages, patchPage, refresh, say]
+  );
   const addPageImages = useCallback(
     async (slug, fileList, mode = "regular") => {
       const files = Array.from(fileList || []).filter((f) => f.type.startsWith("image/"));
@@ -2040,18 +2160,26 @@ export default function App() {
       <div className="dl-root">
         {siteHeader}
         {route.kind === "work" ? (
-          <WorkIndex key="work" pages={pages} onOpen={openPageHash} canEdit={canEdit} onCreate={createPost} />
+          <WorkIndex key="work" pages={visiblePages} onOpen={openPageHash} canEdit={canEdit} onCreate={createPost} />
         ) : route.kind === "about" ? (
-          <AboutPage key="about" canEdit={canEdit} pages={pages} onOpenPage={openPageHash} />
+          <AboutPage
+            key="about"
+            canEdit={canEdit}
+            pages={visiblePages}
+            aboutPage={pages.find((p) => p.slug === "__about__")}
+            onSaveAbout={saveAbout}
+            onOpenPage={openPageHash}
+          />
         ) : (
           <PageView
             key={`p-${route.slug}`}
             slug={route.slug}
-            pages={pages}
+            pages={visiblePages}
             canEdit={canEdit}
             onBack={closePageHash}
             onPatch={patchPage}
             onAddImages={addPageImages}
+            onInsertImage={insertImageAt}
             onRemoveImage={removePageImage}
             onDeletePage={deletePage}
           />
