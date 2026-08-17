@@ -474,7 +474,7 @@ function CanvasImg({ meta, pos, canEdit, drag, resizing, onDragStart, onResizeSt
           aria-label="Drag to scale image"
           onPointerDown={(e) => {
             e.stopPropagation();
-            onResizeStart(e, meta.id);
+            onResizeStart(e, meta.id, "img");
           }}
           onClick={(e) => e.stopPropagation()}
         />
@@ -549,10 +549,18 @@ function LinkCard({ data }) {
   try {
     host = new URL(url).hostname.replace(/^www\./, "");
   } catch {}
+  if (!url) return null;
   return (
-    <a className="dl-linkcard" href={url || "#"} target="_blank" rel="noopener noreferrer" onClick={(e) => !url && e.preventDefault()}>
-      <span className="dl-linkcard-label">{data?.label || url || "Add a link…"}</span>
-      {host && <span className="dl-linkcard-host">{host} ↗</span>}
+    <a className={`dl-linkcard ${data?.img ? "dl-linkcard-withimg" : ""}`} href={url} target="_blank" rel="noopener noreferrer">
+      <span className="dl-linkcard-body">
+        <span className="dl-linkcard-label">{data?.label || url}</span>
+        {host && <span className="dl-linkcard-host">{host} ↗</span>}
+      </span>
+      {data?.img && (
+        <span className="dl-linkcard-img">
+          <img src={data.img} alt="" loading="lazy" />
+        </span>
+      )}
     </a>
   );
 }
@@ -569,7 +577,7 @@ function VideoBlock({ data }) {
 
 function PostCardBlock({ data, pages, onOpenPage }) {
   const p = pages.find((x) => x.slug === data?.slug);
-  if (!p) return <p className="dl-note-text dl-mutetext">Pick a post…</p>;
+  if (!p) return null;
   return (
     <button className="dl-postcard" onClick={() => onOpenPage(p.slug)}>
       {p.images[0] && (
@@ -621,9 +629,100 @@ function BlockBody({ note, pages, snippets, onOpenPage }) {
     );
   if (kind === "link") return <LinkCard data={data} />;
   if (kind === "video") return <VideoBlock data={data} />;
-  if (kind === "post") return <PostCardBlock data={data} pages={pages} onOpenPage={onOpenPage} />;
-  if (kind === "card") return <SnippetView snippet={snippets.find((x) => x.id === data.snippetId)} pages={pages} onOpenPage={onOpenPage} />;
+  if (kind === "post") {
+    if (!data.slug) return null;
+    return <PostCardBlock data={data} pages={pages} onOpenPage={onOpenPage} />;
+  }
+  if (kind === "card") {
+    if (!data.snippetId) return null;
+    return <SnippetView snippet={snippets.find((x) => x.id === data.snippetId)} pages={pages} onOpenPage={onOpenPage} />;
+  }
   return <p className="dl-note-text">{mdInline(note.text)}</p>;
+}
+
+function MdArea({ value, onChange, rows, placeholder, autoFocus, allowBlocks, className }) {
+  const ref = useRef(null);
+  const [sel, setSel] = useState(null);
+  const [linkMode, setLinkMode] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const update = () => {
+    const el = ref.current;
+    if (!el) return;
+    const s = el.selectionStart;
+    const e = el.selectionEnd;
+    if (e > s) setSel({ start: s, end: e });
+    else {
+      setSel(null);
+      setLinkMode(false);
+    }
+  };
+  const wrap = (pre, post) => {
+    if (!sel) return;
+    const p2 = post === undefined ? pre : post;
+    const next = value.slice(0, sel.start) + pre + value.slice(sel.start, sel.end) + p2 + value.slice(sel.end);
+    onChange(next);
+    const el = ref.current;
+    const s = sel.start + pre.length;
+    const e = sel.end + pre.length;
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(s, e);
+    });
+  };
+  const linePrefix = (pfx) => {
+    if (!sel) return;
+    const ls = value.lastIndexOf("\n", sel.start - 1) + 1;
+    onChange(value.slice(0, ls) + pfx + value.slice(ls));
+    setSel(null);
+  };
+  const applyLink = () => {
+    if (!linkUrl.trim() || !sel) return;
+    wrap("[", `](${linkUrl.trim()})`);
+    setLinkMode(false);
+    setLinkUrl("");
+  };
+  return (
+    <span className="dl-mdarea">
+      {sel && (
+        <span className="dl-mdbar" onMouseDown={(e) => e.preventDefault()}>
+          {linkMode ? (
+            <input
+              autoFocus
+              value={linkUrl}
+              placeholder="https://…"
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  applyLink();
+                }
+                if (e.key === "Escape") setLinkMode(false);
+              }}
+            />
+          ) : (
+            <>
+              <button aria-label="Bold" onMouseDown={(e) => { e.preventDefault(); wrap("**"); }}><b>B</b></button>
+              <button aria-label="Italic" onMouseDown={(e) => { e.preventDefault(); wrap("*"); }}><i>I</i></button>
+              {allowBlocks && <button aria-label="Heading" onMouseDown={(e) => { e.preventDefault(); linePrefix("## "); }}>H</button>}
+              {allowBlocks && <button aria-label="Quote" onMouseDown={(e) => { e.preventDefault(); linePrefix("> "); }}>&ldquo;&rdquo;</button>}
+              <button aria-label="Link" onMouseDown={(e) => { e.preventDefault(); setLinkMode(true); }}>⌁</button>
+            </>
+          )}
+        </span>
+      )}
+      <textarea
+        ref={ref}
+        className={className}
+        rows={rows}
+        value={value}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        onChange={(e) => onChange(e.target.value)}
+        onSelect={update}
+        onBlur={() => setTimeout(() => { setSel(null); setLinkMode(false); }, 200)}
+      />
+    </span>
+  );
 }
 
 function BlockEditor({ note, pages, snippets, onSave, onClose }) {
@@ -632,11 +731,12 @@ function BlockEditor({ note, pages, snippets, onSave, onClose }) {
   const [cite, setCite] = useState(note.data?.cite || "");
   const [url, setUrl] = useState(note.data?.url || "");
   const [label, setLabel] = useState(note.data?.label || "");
+  const [img, setImg] = useState(note.data?.img || "");
   const [slug, setSlug] = useState(note.data?.slug || "");
   const [snippetId, setSnippetId] = useState(note.data?.snippetId || "");
   const save = () => {
     if (kind === "quote") onSave(note.id, { text, data: { cite: cite.trim() } });
-    else if (kind === "link") onSave(note.id, { text: "", data: { url: url.trim(), label: label.trim() } });
+    else if (kind === "link") onSave(note.id, { text: "", data: { url: url.trim(), label: label.trim(), img: img.trim() } });
     else if (kind === "video") onSave(note.id, { text: "", data: { url: url.trim() } });
     else if (kind === "post") onSave(note.id, { text: "", data: { slug } });
     else if (kind === "card") onSave(note.id, { text: "", data: { snippetId } });
@@ -646,13 +746,14 @@ function BlockEditor({ note, pages, snippets, onSave, onClose }) {
   return (
     <div className="dl-blockedit" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
       {(kind === "text" || kind === "quote") && (
-        <textarea autoFocus rows={3} value={text} placeholder={kind === "quote" ? "Quote… (**bold**, *italic*, [links](url))" : "Write… (**bold**, *italic*, [links](url))"} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Escape" && onClose()} />
+        <MdArea autoFocus rows={3} value={text} placeholder={kind === "quote" ? "Quote — highlight text for formatting" : "Write — highlight text for formatting"} onChange={setText} />
       )}
       {kind === "quote" && <input value={cite} placeholder="Attribution (optional)" onChange={(e) => setCite(e.target.value)} />}
       {(kind === "link" || kind === "video") && (
         <input autoFocus={kind === "video"} value={url} placeholder={kind === "video" ? "YouTube or Vimeo URL" : "https://…"} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} />
       )}
       {kind === "link" && <input autoFocus value={label} placeholder="Label" onChange={(e) => setLabel(e.target.value)} />}
+      {kind === "link" && <input value={img} placeholder="Share image URL (optional — the link's og/social image)" onChange={(e) => setImg(e.target.value)} />}
       {kind === "post" && (
         <select autoFocus value={slug} onChange={(e) => setSlug(e.target.value)}>
           <option value="" disabled>Pick a post…</option>
@@ -672,14 +773,19 @@ function BlockEditor({ note, pages, snippets, onSave, onClose }) {
   );
 }
 
-function CanvasBlock({ note, pos, canEdit, drag, pages, snippets, onOpenPage, onDragStart, onPatchBlock, onSnip, onDelete }) {
-  const [editingText, setEditingText] = useState(false);
-  const isDragging = drag && drag.id === note.id;
+function CanvasBlock({ note, pos, canEdit, drag, resizing, pages, snippets, onOpenPage, onDragStart, onResizeStart, onPatchBlock, onSnip, onDelete }) {
+  const needsPick =
+    (note.kind === "card" && !note.data?.snippetId) ||
+    (note.kind === "post" && !note.data?.slug) ||
+    (note.kind === "link" && !note.data?.url) ||
+    (note.kind === "video" && !note.data?.url);
+  const [editingText, setEditingText] = useState(() => canEdit && needsPick);
+  const isDragging = (drag && drag.id === note.id) || resizing;
   const style = {
     left: `${pos.fx}%`,
     top: `${pos.top}px`,
     width: `${pos.fw}%`,
-    transform: isDragging ? `translate(${drag.dx}px, ${drag.dy}px)` : undefined,
+    transform: drag && drag.id === note.id ? `translate(${drag.dx}px, ${drag.dy}px)` : undefined,
     zIndex: isDragging ? 5 : 2,
   };
   const snippable = ["text", "quote", "link", "video"].includes(note.kind || "text");
@@ -693,6 +799,18 @@ function CanvasBlock({ note, pos, canEdit, drag, pages, snippets, onOpenPage, on
         <BlockEditor note={note} pages={pages} snippets={snippets} onSave={onPatchBlock} onClose={() => setEditingText(false)} />
       ) : (
         <BlockBody note={note} pages={pages} snippets={snippets} onOpenPage={onOpenPage} />
+      )}
+      {canEdit && !editingText && (
+        <span
+          className="dl-resize dl-resize-note"
+          title="Drag to scale"
+          aria-label="Drag to scale block"
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            onResizeStart(e, note.id, "note");
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
       )}
       {canEdit && !editingText && (
         <div className="dl-fig-actions dl-note-actions" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
@@ -761,10 +879,10 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets,
     e.currentTarget.setPointerCapture?.(e.pointerId);
     setDrag({ id, kind, mode: "move", startX: e.clientX, startY: e.clientY, dx: 0, dy: 0, moved: false });
   };
-  const onResizeStart = (e, id) => {
+  const onResizeStart = (e, id, kind = "img") => {
     if (e.button !== 0) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
-    setDrag({ id, kind: "img", mode: "resize", startX: e.clientX, startY: e.clientY, dx: 0, dy: 0, moved: false });
+    setDrag({ id, kind, mode: "resize", startX: e.clientX, startY: e.clientY, dx: 0, dy: 0, moved: false });
   };
   const liveFw = (p, d) => clamp(snapv(p.fw + (d.dx / (width || 1)) * 100), 10, Math.max(10, 100 - p.fx));
   useEffect(() => {
@@ -901,9 +1019,14 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets,
             <CanvasBlock
               key={n.id}
               note={n}
-              pos={layout.get(n.id) || { fx: 4, fy: 2, fw: 28, top: 0 }}
+              pos={(() => {
+                const p = layout.get(n.id) || { fx: 4, fy: 2, fw: 28, top: 0 };
+                return drag && drag.moved && drag.mode === "resize" && drag.id === n.id ? { ...p, fw: liveFw(p, drag) } : p;
+              })()}
               canEdit={canEdit}
               drag={drag && drag.moved && drag.mode === "move" ? drag : null}
+              resizing={Boolean(drag && drag.moved && drag.mode === "resize" && drag.id === n.id)}
+              onResizeStart={onResizeStart}
               pages={pages}
               snippets={snippets}
               onOpenPage={onOpenPage}
@@ -1073,7 +1196,7 @@ function PageView({ slug, pages, canEdit, onBack, onPatch, onAddImages, onRemove
           <>
             <input className="dl-page-title-input" value={page.title} placeholder="Page title" onChange={(e) => onPatch(slug, { title: e.target.value })} />
             <input className="dl-page-sub-input" value={page.subtitle || ""} placeholder="Year — medium, edition… (subtitle)" onChange={(e) => onPatch(slug, { subtitle: e.target.value })} />
-            <textarea className="dl-page-text-input" value={page.body || ""} placeholder={"Write the post. Blank line = paragraph · ## Heading · > Quote · **bold** · *italic* · [link](https://…)"} rows={7} onChange={(e) => onPatch(slug, { body: e.target.value })} />
+            <MdArea className="dl-page-text-input" value={page.body || ""} placeholder={"Write the post — highlight text for the formatting toolbar. Blank line = paragraph."} rows={10} allowBlocks onChange={(v) => onPatch(slug, { body: v })} />
           </>
         ) : (
           <>

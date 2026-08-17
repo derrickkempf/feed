@@ -520,6 +520,44 @@ html { scroll-behavior: smooth; }
 .dl-page-h2 { font-family: var(--head); font-size: clamp(22px, 3vw, 32px); text-transform: uppercase; line-height: 1.05; margin: 30px 0 12px; }
 .dl-work-new { text-align: center; margin: -30px 0 40px; }
 
+
+/* ghost-style highlight toolbar */
+.dl-mdarea { position: relative; display: block; width: 100%; }
+.dl-mdarea textarea {
+  width: 100%; font-family: var(--type); font-size: 14px; line-height: 1.6; color: var(--ink);
+  border: 1px solid var(--ink); border-radius: 4px; background: var(--paper);
+  padding: 8px; resize: vertical; outline: none;
+}
+.dl-mdbar {
+  position: absolute; top: -40px; left: 50%; transform: translateX(-50%); z-index: 8;
+  display: inline-flex; align-items: center; gap: 2px;
+  background: #161616; border-radius: 6px; padding: 4px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+}
+.dl-mdbar::after {
+  content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px;
+  border: 5px solid transparent; border-top-color: #161616;
+}
+.dl-mdbar button {
+  min-width: 28px; height: 28px; border: none; border-radius: 4px;
+  background: transparent; color: #fff; cursor: pointer;
+  font-family: var(--type); font-size: 13px;
+}
+.dl-mdbar button:hover { background: #333; }
+.dl-mdbar input {
+  width: 190px; height: 28px; border: none; border-radius: 4px;
+  background: #262626; color: #fff; font-family: var(--type); font-size: 12px;
+  padding: 0 8px; outline: none;
+}
+.dl-resize-note { background: rgba(0,0,0,.35); }
+.dl-item-note:hover .dl-resize-note { opacity: 1; }
+
+/* link card with share image */
+.dl-linkcard-withimg { flex-direction: row; align-items: center; gap: 12px; }
+.dl-linkcard-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.dl-linkcard-img { flex: 0 0 86px; }
+.dl-linkcard-img img { width: 86px; height: 62px; object-fit: cover; display: block; border-radius: 4px; }
+
 /* ===== drop wash / toasts ===== */
 .dl-wash { position: fixed; inset: 0; z-index: 40; pointer-events: none; background: rgba(249,249,249,.93); display: flex; align-items: center; justify-content: center; }
 .dl-wash-inner {
