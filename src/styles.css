@@ -1,6 +1,6 @@
 /* ---- type stack ----
    H1/H2: Frankie News (fallback Libre Franklin, loaded in index.html)
-   nav/labels: DEWD Cool Old Sign · body: HEX Franklin (variable) */
+   nav/labels: DEWD Cool Old Sign · body: TT2020 Style E */
 @font-face {
   font-family: 'Frankie News';
   src: url('/fonts/FrankieNewsRegular.woff2') format('woff2'),
@@ -14,29 +14,14 @@
   font-weight: normal; font-style: normal; font-display: swap;
 }
 @font-face {
-  font-family: 'HEX Franklin';
-  src: url('/fonts/HEXFranklin-Variable.woff2') format('woff2');
-  font-weight: 400 800; font-stretch: 60% 100%;
-  font-style: normal; font-display: swap;
+  font-family: 'TT2020 Style E';
+  src: url('/fonts/TT2020StyleE-Regular.woff2') format('woff2');
+  font-weight: normal; font-style: normal; font-display: swap;
 }
-
 @font-face {
-  font-family: 'TT2020StyleE';
-  src: url('TT2020StyleE-Regular-subset.woff2') format('woff2');
-  font-weight: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'TT2020StyleE';
-  src: url('TT2020StyleE-Italic-subset.woff2') format('woff2');
-  font-weight: normal;
-  font-style: italic;
-  font-display: swap;
-}
-
-body {
-  font-family: 'TT2020StyleE', sans-serif;
+  font-family: 'TT2020 Style E';
+  src: url('/fonts/TT2020StyleE-Italic.woff2') format('woff2');
+  font-weight: normal; font-style: italic; font-display: swap;
 }
 
 html { margin: 0; }
@@ -50,7 +35,7 @@ body { margin: 0; }
   --block: #4d4d4d;
   --head: 'Frankie News', 'Libre Franklin', system-ui, sans-serif;
   --sign: 'DEWD Cool Old Sign', 'Libre Franklin', sans-serif;
-  --type: 'HEX Franklin', 'Libre Franklin', system-ui, sans-serif;
+  --type: 'TT2020 Style E', 'Courier New', monospace;
 }
 * { box-sizing: border-box; }
 .dl-root {
