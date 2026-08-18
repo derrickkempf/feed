@@ -18,7 +18,7 @@ const PASS = import.meta.env.VITE_OWNER_PASSPHRASE || "";
 const SNAP = 2;
 const SIZES = [22, 32, 46, 64];
 const SITE_NAME = "Derrick Kempf";
-const SITE_TAGLINE = "A daily record of what I'm making.";
+const SITE_TAGLINE = "Artist & Brand Identity Designer";
 const SITE_HERO = ["Art feed"];
 const SOCIALS = [
   { label: "X", url: "https://x.com/derrickkempf" },
@@ -1134,13 +1134,48 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets,
 
 // ---------- footer ----------
 function Footer() {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const wrapRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDoc);
+    return () => document.removeEventListener("pointerdown", onDoc);
+  }, [open]);
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareTitle = typeof document !== "undefined" ? document.title : "Feed";
+  const u = encodeURIComponent(shareUrl);
+  const t = encodeURIComponent(shareTitle);
+  const copyForInstagram = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = shareUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
   return (
-    <footer className="dl-footer">
+    <footer className="dl-footer" ref={wrapRef}>
       <span className="dl-footer-c">© {new Date().getFullYear()}</span>
-      <span className="dl-footer-links">
-        {SOCIALS.map((so) => (
-          <a key={so.label} href={so.url} target="_blank" rel="noopener noreferrer">{so.label}</a>
-        ))}
+      <span className="dl-share-wrap">
+        {open && (
+          <div className="dl-share-panel">
+            <a href={`https://twitter.com/intent/tweet?url=${u}&text=${t}`} target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+            <button onClick={copyForInstagram}>{copied ? "Link copied!" : "Instagram"}</button>
+            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${u}`} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href={`https://pinterest.com/pin/create/button/?url=${u}&description=${t}`} target="_blank" rel="noopener noreferrer">Pinterest</a>
+          </div>
+        )}
+        <button className="dl-share-btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>Share</button>
       </span>
     </footer>
   );

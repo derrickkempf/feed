@@ -58,6 +58,7 @@ html { scroll-behavior: smooth; }
   font-family: var(--sign); font-size: 15px; letter-spacing: 0.1em;
   text-transform: uppercase; cursor: pointer; user-select: none;
   background: none; border: none; padding: 0; color: var(--ink);
+  mix-blend-mode: difference;
 }
 .dl-tagline {
   position: absolute; left: 50%; transform: translateX(-50%);
@@ -69,7 +70,8 @@ html { scroll-behavior: smooth; }
 .dl-navlink {
   font-family: var(--sign); font-size: 15px; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--ink);
-  background: none; border: none; padding: 4px 0; cursor: pointer;
+  background: none; border: none; padding: 4px 0px; cursor: pointer;
+  mix-blend-mode: difference;
 }
 .dl-add {
   font-family: var(--sign); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -427,11 +429,12 @@ html { scroll-behavior: smooth; }
 }
 .dl-footer a, .dl-footer span { pointer-events: auto; }
 @media (max-width: 700px) { .dl-footer { padding: 12px 24px 14px; } }
-.dl-footer-c { font-family: var(--sign); font-size: 13px; letter-spacing: 0.1em; }
+.dl-footer-c { font-family: var(--sign); font-size: 15px; letter-spacing: 0.1em; mix-blend-mode: difference; }
 .dl-footer-links { display: flex; gap: 18px; }
 .dl-footer-links a {
-  font-family: var(--sign); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: var(--sign); font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ink); text-decoration: none;
+  mix-blend-mode: difference;
 }
 
 /* ===== split-screen detail ===== */
@@ -593,7 +596,7 @@ html { scroll-behavior: smooth; }
 
 /* ===== animated underlines ===== */
 /* hover links: line grows in from the left */
-.dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink {
+.dl-navlink, .dl-mark, .dl-footer-links a, .dl-share-btn, .dl-split-pagelink {
   text-decoration: none;
   background-image: linear-gradient(currentColor, currentColor);
   background-repeat: no-repeat;
@@ -604,6 +607,7 @@ html { scroll-behavior: smooth; }
 .dl-navlink:hover, .dl-navlink:focus-visible,
 .dl-mark:hover, .dl-mark:focus-visible,
 .dl-footer-links a:hover, .dl-footer-links a:focus-visible,
+.dl-share-btn:hover, .dl-share-btn:focus-visible,
 .dl-split-pagelink:hover, .dl-split-pagelink:focus-visible {
   background-size: 100% 1.5px;
 }
@@ -664,7 +668,8 @@ html { scroll-behavior: smooth; }
 
 
 /* end-of-scroll mark */
-.dl-endmark { display: block; margin: 20px auto 4px; width: 69vw; height: auto; }
+.dl-endmark { display: block; margin: 20px auto 4px; width: 50vw; height: auto; }
+@media (max-width: 700px) { .dl-endmark { width: 88vw; } }
 
 
 /* magazine floats in posts */
@@ -735,6 +740,33 @@ html { scroll-behavior: smooth; }
 .dl-about-labelfield input {
   font-family: var(--type); font-size: 14px; text-transform: none; letter-spacing: normal; color: var(--ink);
   border: 1px solid var(--ink); border-radius: 4px; background: var(--paper); padding: 8px;
+}
+
+
+/* share panel */
+.dl-share-wrap { position: relative; display: inline-flex; }
+.dl-share-btn {
+  font-family: var(--sign); font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink); background: none; border: none; padding: 4px 0px; cursor: pointer;
+  mix-blend-mode: difference;
+}
+.dl-share-panel {
+  position: absolute; bottom: 100%; right: 0; margin-bottom: 12px;
+  display: flex; flex-direction: column; gap: 2px; min-width: 160px;
+  background: var(--paper); border: 1px solid var(--ink); border-radius: 8px;
+  padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  animation: dl-share-in .18s ease;
+  transform-origin: bottom right;
+}
+.dl-share-panel a, .dl-share-panel button {
+  font-family: var(--type); font-size: 14px; text-align: left; text-decoration: none;
+  color: var(--ink); background: none; border: none; border-radius: 5px;
+  padding: 9px 10px; cursor: pointer;
+}
+.dl-share-panel a:hover, .dl-share-panel button:hover { background: var(--block); }
+@keyframes dl-share-in {
+  from { opacity: 0; transform: translateY(6px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ===== drop wash / toasts ===== */
