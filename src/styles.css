@@ -56,7 +56,7 @@ html { scroll-behavior: smooth; }
 }
 .dl-tagline {
   position: absolute; left: 50%; transform: translateX(-50%);
-  font-family: var(--type); font-size: 10.5px; letter-spacing: 0.08em;
+  font-family: var(--type); font-size: 10.5px; letter-spacing: 0.01em;
   color: var(--mute); white-space: nowrap;
 }
 @media (max-width: 900px) { .dl-tagline { display: none; } }
