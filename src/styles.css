@@ -136,7 +136,7 @@ html { scroll-behavior: smooth; }
 }
 
 /* ===== scroll of days ===== */
-.dl-scroll { max-width: 1840px; margin: 0 auto; padding: 0 48px 140px; }
+.dl-scroll { max-width: 1840px; margin: 0 auto; padding: 0 50px 50px; }
 @media (max-width: 700px) { .dl-scroll { padding: 0 24px 70px; } .dl-toprow { padding: 22px 24px 8px; } .dl-filterbar { margin: 6px 24px 0; } }
 .dl-loading, .dl-end {
   font-family: var(--type); color: var(--mute); text-align: center; font-size: 13px;
@@ -414,7 +414,7 @@ html { scroll-behavior: smooth; }
 .dl-about-img { background: var(--block); aspect-ratio: 6 / 5; width: 100%; }
 .dl-about-text { font-family: var(--type); font-size: 15px; line-height: 1.75; max-width: 62ch; padding-top: 40px; }
 .dl-about-text p { margin: 0 0 22px; }
-.dl-about-text p:first-of-type { font-style: italic; }
+
 .dl-about-mail { color: var(--ink); }
 .dl-about-owner { margin-top: 40px; padding-top: 0; }
 .dl-pagelist a { color: var(--ink); }
@@ -664,8 +664,7 @@ html { scroll-behavior: smooth; }
 
 
 /* end-of-scroll mark */
-.dl-endmark { display: block; margin: 20px auto 4px; width: min(340px, 62vw); height: auto; }
-@media (min-width: 900px) { .dl-endmark { width: 600px; margin: 16px auto 0; } }
+.dl-endmark { display: block; margin: 20px auto 4px; width: 69vw; height: auto; }
 
 
 /* magazine floats in posts */
