@@ -506,9 +506,17 @@ html { scroll-behavior: smooth; }
 
 /* ===== rich blocks ===== */
 .dl-quote {
-  margin: 0; padding: 2px 0 2px 16px; border-left: 2px solid var(--ink);
+  margin: 0; padding: 60px 40px 30px 40px; border-left: 4px solid var(--ink);
 }
-.dl-quote p { margin: 0; font-family: var(--type); font-style: italic; font-size: 15px; line-height: 1.7; }
+.dl-quote::before {
+  content: '\201C';
+  display: block;
+  font-family: var(--head);
+  font-size: 80px;
+  line-height: 0.6;
+  color: var(--ink);
+}
+.dl-quote p { margin: 0; font-family: var(--head); font-style: normal; font-size: 28px; line-height: 1; letter-spacing: -0.06em; }
 .dl-quote cite { display: block; margin-top: 10px; font-family: var(--sign); font-style: normal; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
 .dl-linkcard {
   display: flex; flex-direction: column; gap: 2px;
