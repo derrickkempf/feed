@@ -18,7 +18,7 @@ const PASS = import.meta.env.VITE_OWNER_PASSPHRASE || "";
 const SNAP = 2;
 const SIZES = [22, 32, 46, 64];
 const SITE_NAME = "Derrick Kempf";
-const SITE_TAGLINE = "A daily record of what I'm making";
+const SITE_TAGLINE = "A daily record of what I'm making.";
 const SITE_HERO = ["Art feed"];
 const SOCIALS = [
   { label: "X", url: "https://x.com/derrickkempf" },
