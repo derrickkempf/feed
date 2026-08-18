@@ -1,6 +1,6 @@
 /* ---- type stack ----
-   H1/H2: Frankie News (fallback Libre Franklin, loaded in index.html)
-   nav/labels: DEWD Cool Old Sign · body: TT2020 Style E */
+   H1/H2/H3: Frankie News (fallback Libre Franklin, loaded in index.html)
+   everything else: HEX Franklin (variable) */
 @font-face {
   font-family: 'Frankie News';
   src: url('/fonts/FrankieNewsRegular.woff2') format('woff2'),
@@ -8,20 +8,10 @@
   font-weight: normal; font-style: normal; font-display: swap;
 }
 @font-face {
-  font-family: 'DEWD Cool Old Sign';
-  src: url('/fonts/DEWDCoolOldSignRegular.woff2') format('woff2'),
-       url('/fonts/DEWDCoolOldSignRegular.woff') format('woff');
-  font-weight: normal; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'TT2020 Style E';
-  src: url('/fonts/TT2020StyleE-Regular.woff2') format('woff2');
-  font-weight: normal; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'TT2020 Style E';
-  src: url('/fonts/TT2020StyleE-Italic.woff2') format('woff2');
-  font-weight: normal; font-style: italic; font-display: swap;
+  font-family: 'HEX Franklin';
+  src: url('/fonts/HEXFranklin-Variable.woff2') format('woff2');
+  font-weight: 400 800; font-stretch: 60% 100%;
+  font-style: normal; font-display: swap;
 }
 
 html { margin: 0; }
@@ -34,8 +24,8 @@ body { margin: 0; }
   --line: #e4e4e0;
   --block: #4d4d4d;
   --head: 'Frankie News', 'Libre Franklin', system-ui, sans-serif;
-  --sign: 'DEWD Cool Old Sign', 'Libre Franklin', sans-serif;
-  --type: 'TT2020 Style E', 'Courier New', monospace;
+  --sign: 'HEX Franklin', 'Libre Franklin', sans-serif;
+  --type: 'HEX Franklin', 'Libre Franklin', system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
 .dl-root {
@@ -61,7 +51,7 @@ html { scroll-behavior: smooth; }
 .dl-mark {
   font-family: var(--sign); font-size: 15px; letter-spacing: 0.1em;
   text-transform: uppercase; cursor: pointer; user-select: none;
-  background: none; border: none; padding: 0; color: var(--ink);
+  background: none; border: none; padding: 4px 0px; color: var(--ink);
   mix-blend-mode: difference;
 }
 .dl-tagline {
@@ -426,6 +416,14 @@ html { scroll-behavior: smooth; }
 .dl-pagelist a { color: var(--ink); }
 
 /* ===== footer ===== */
+.dl-clock {
+  font-family: var(--sign); font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+  mix-blend-mode: difference;
+}
+.dl-clock-colon { transition: opacity 0s; }
+.dl-clock-colon-off { opacity: 0; }
+
 .dl-footer {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
   display: flex; align-items: center; justify-content: space-between;
@@ -600,7 +598,7 @@ html { scroll-behavior: smooth; }
 
 /* ===== animated underlines ===== */
 /* hover links: line grows in from the left */
-.dl-navlink, .dl-mark, .dl-footer-links a, .dl-share-btn, .dl-split-pagelink {
+.dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink {
   text-decoration: none;
   background-image: linear-gradient(currentColor, currentColor);
   background-repeat: no-repeat;
@@ -611,7 +609,6 @@ html { scroll-behavior: smooth; }
 .dl-navlink:hover, .dl-navlink:focus-visible,
 .dl-mark:hover, .dl-mark:focus-visible,
 .dl-footer-links a:hover, .dl-footer-links a:focus-visible,
-.dl-share-btn:hover, .dl-share-btn:focus-visible,
 .dl-split-pagelink:hover, .dl-split-pagelink:focus-visible {
   background-size: 100% 1.5px;
 }
@@ -641,8 +638,8 @@ html { scroll-behavior: smooth; }
 
 /* frankie heading scale + display quote */
 .dl-page-h3 { font-family: var(--head); font-size: clamp(19px, 2.4vw, 25px); text-transform: uppercase; line-height: 1.08; margin: 26px 0 10px; }
-.dl-page-h4 { font-family: var(--head); font-size: clamp(17px, 2vw, 21px); text-transform: uppercase; line-height: 1.1; margin: 22px 0 8px; }
-.dl-page-h5 { font-family: var(--head); font-size: 16px; letter-spacing: .02em; text-transform: uppercase; line-height: 1.15; margin: 20px 0 8px; }
+.dl-page-h4 { font-family: var(--type); font-weight: 700; font-size: clamp(17px, 2vw, 21px); text-transform: uppercase; line-height: 1.1; margin: 22px 0 8px; }
+.dl-page-h5 { font-family: var(--type); font-weight: 700; font-size: 16px; letter-spacing: .02em; text-transform: uppercase; line-height: 1.15; margin: 20px 0 8px; }
 .dl-quote-big { border-left-width: 3px; padding-left: 20px; }
 .dl-quote-big p { font-family: var(--head); font-style: normal; font-size: clamp(20px, 2.8vw, 30px); line-height: 1.12; text-transform: uppercase; }
 
@@ -746,32 +743,6 @@ html { scroll-behavior: smooth; }
   border: 1px solid var(--ink); border-radius: 4px; background: var(--paper); padding: 8px;
 }
 
-
-/* share panel */
-.dl-share-wrap { position: relative; display: inline-flex; }
-.dl-share-btn {
-  font-family: var(--sign); font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--ink); background: none; border: none; padding: 4px 0px; cursor: pointer;
-  mix-blend-mode: difference;
-}
-.dl-share-panel {
-  position: absolute; bottom: 100%; right: 0; margin-bottom: 12px;
-  display: flex; flex-direction: column; gap: 2px; min-width: 160px;
-  background: var(--paper); border: 1px solid var(--ink); border-radius: 8px;
-  padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.12);
-  animation: dl-share-in .18s ease;
-  transform-origin: bottom right;
-}
-.dl-share-panel a, .dl-share-panel button {
-  font-family: var(--type); font-size: 14px; text-align: left; text-decoration: none;
-  color: var(--ink); background: none; border: none; border-radius: 5px;
-  padding: 9px 10px; cursor: pointer;
-}
-.dl-share-panel a:hover, .dl-share-panel button:hover { background: var(--block); }
-@keyframes dl-share-in {
-  from { opacity: 0; transform: translateY(6px) scale(.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
 
 /* ===== drop wash / toasts ===== */
 .dl-wash { position: fixed; inset: 0; z-index: 40; pointer-events: none; background: rgba(249,249,249,.93); display: flex; align-items: center; justify-content: center; }

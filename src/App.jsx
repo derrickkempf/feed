@@ -1134,48 +1134,33 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets,
 
 // ---------- footer ----------
 function Footer() {
-  const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const wrapRef = useRef(null);
+  const [now, setNow] = useState(() => new Date());
+  const [colonOn, setColonOn] = useState(true);
   useEffect(() => {
-    if (!open) return;
-    const onDoc = (e) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    const t1 = setInterval(() => setNow(new Date()), 1000);
+    const t2 = setInterval(() => setColonOn((c) => !c), 500);
+    return () => {
+      clearInterval(t1);
+      clearInterval(t2);
     };
-    document.addEventListener("pointerdown", onDoc);
-    return () => document.removeEventListener("pointerdown", onDoc);
-  }, [open]);
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareTitle = typeof document !== "undefined" ? document.title : "Feed";
-  const u = encodeURIComponent(shareUrl);
-  const t = encodeURIComponent(shareTitle);
-  const copyForInstagram = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = shareUrl;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  };
+  }, []);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Phoenix",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    hourCycle: "h12",
+  }).formatToParts(now);
+  const get = (t) => parts.find((p) => p.type === t)?.value || "";
+  const hh = get("hour").padStart(2, "0");
+  const mm = get("minute");
   return (
-    <footer className="dl-footer" ref={wrapRef}>
+    <footer className="dl-footer">
       <span className="dl-footer-c">© {new Date().getFullYear()}</span>
-      <span className="dl-share-wrap">
-        {open && (
-          <div className="dl-share-panel">
-            <a href={`https://twitter.com/intent/tweet?url=${u}&text=${t}`} target="_blank" rel="noopener noreferrer">X (Twitter)</a>
-            <button onClick={copyForInstagram}>{copied ? "Link copied!" : "Instagram"}</button>
-            <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${u}`} target="_blank" rel="noopener noreferrer">LinkedIn</a>
-            <a href={`https://pinterest.com/pin/create/button/?url=${u}&description=${t}`} target="_blank" rel="noopener noreferrer">Pinterest</a>
-          </div>
-        )}
-        <button className="dl-share-btn" aria-expanded={open} onClick={() => setOpen((o) => !o)}>Share</button>
+      <span className="dl-clock">
+        {hh}
+        <span className={`dl-clock-colon ${colonOn ? "" : "dl-clock-colon-off"}`}>:</span>
+        {mm}
       </span>
     </footer>
   );
