@@ -56,7 +56,7 @@ html { scroll-behavior: smooth; }
 }
 .dl-tagline {
   position: absolute; left: 50%; transform: translateX(-50%);
-  font-family: var(--type); font-size: 10.5px; letter-spacing: 0.01em;
+  font-family: var(--type); font-size: 10.5px; letter-spacing: 0.08em;
   color: var(--mute); white-space: nowrap;
 }
 @media (max-width: 900px) { .dl-tagline { display: none; } }
@@ -418,7 +418,7 @@ html { scroll-behavior: smooth; }
 /* ===== footer ===== */
 .dl-clock {
   font-family: var(--sign); font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--ink); font-variant-numeric: tabular-nums;
+  color: var(--ink); font-variant-numeric: tabular-nums; text-decoration: none;
   mix-blend-mode: difference;
 }
 .dl-clock-colon { transition: opacity 0s; }
@@ -606,7 +606,7 @@ html { scroll-behavior: smooth; }
 
 /* ===== animated underlines ===== */
 /* hover links: line grows in from the left */
-.dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink {
+.dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink, .dl-clock {
   text-decoration: none;
   background-image: linear-gradient(currentColor, currentColor);
   background-repeat: no-repeat;
@@ -617,7 +617,8 @@ html { scroll-behavior: smooth; }
 .dl-navlink:hover, .dl-navlink:focus-visible,
 .dl-mark:hover, .dl-mark:focus-visible,
 .dl-footer-links a:hover, .dl-footer-links a:focus-visible,
-.dl-split-pagelink:hover, .dl-split-pagelink:focus-visible {
+.dl-split-pagelink:hover, .dl-split-pagelink:focus-visible,
+.dl-clock:hover, .dl-clock:focus-visible {
   background-size: 100% 1.5px;
 }
 
@@ -638,7 +639,7 @@ html { scroll-behavior: smooth; }
   background-size: 0% 1.5px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink,
+  .dl-navlink, .dl-mark, .dl-footer-links a, .dl-split-pagelink, .dl-clock,
   .dl-clear, .dl-about-mail, .dl-pagelist a, .dl-work-card-more,
   .dl-note-text a, .dl-quote a, .dl-page-text a { transition: none; }
 }

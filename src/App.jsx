@@ -18,7 +18,7 @@ const PASS = import.meta.env.VITE_OWNER_PASSPHRASE || "";
 const SNAP = 2;
 const SIZES = [22, 32, 46, 64];
 const SITE_NAME = "Derrick Kempf";
-const SITE_TAGLINE = "A daily record of what I'm making.";
+const SITE_TAGLINE = "Artist & Brand Identity Designer";
 const SITE_HERO = ["Art feed"];
 const SOCIALS = [
   { label: "X", url: "https://x.com/derrickkempf" },
@@ -1134,34 +1134,19 @@ function DayCanvas({ day, isToday, canEdit, filterOn, isMobile, pages, snippets,
 
 // ---------- footer ----------
 function Footer() {
-  const [now, setNow] = useState(() => new Date());
   const [colonOn, setColonOn] = useState(true);
   useEffect(() => {
-    const t1 = setInterval(() => setNow(new Date()), 1000);
     const t2 = setInterval(() => setColonOn((c) => !c), 500);
-    return () => {
-      clearInterval(t1);
-      clearInterval(t2);
-    };
+    return () => clearInterval(t2);
   }, []);
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Phoenix",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    hourCycle: "h12",
-  }).formatToParts(now);
-  const get = (t) => parts.find((p) => p.type === t)?.value || "";
-  const hh = get("hour").padStart(2, "0");
-  const mm = get("minute");
   return (
     <footer className="dl-footer">
       <span className="dl-footer-c">© {new Date().getFullYear()}</span>
-      <span className="dl-clock">
-        {hh}
+      <a className="dl-clock" href="https://madeartes.com" target="_blank" rel="noopener noreferrer">
+        MA
         <span className={`dl-clock-colon ${colonOn ? "" : "dl-clock-colon-off"}`}>:</span>
-        {mm}
-      </span>
+        DE
+      </a>
     </footer>
   );
 }
