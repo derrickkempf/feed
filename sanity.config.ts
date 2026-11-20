@@ -6,6 +6,7 @@ import {visionTool} from '@sanity/vision'
 import {apiVersion, dataset, projectId} from './sanity/env'
 import {schemaTypes, singletonTypes} from './sanity/schemaTypes'
 import {structure} from './sanity/structure'
+import {archiveImportTool} from './sanity/tools/archiveImport'
 
 export default defineConfig({
   basePath: '/studio',
@@ -25,4 +26,5 @@ export default defineConfig({
         : input,
   },
   plugins: [structureTool({structure}), visionTool({defaultApiVersion: apiVersion})],
+  tools: (prev) => [...prev, archiveImportTool],
 })

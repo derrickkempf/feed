@@ -9,7 +9,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "migrate": "node --env-file=.env.local scripts/migrate-from-supabase.mjs",
-    "sync-schema": "rm -rf studio/schemaTypes && cp -R sanity/schemaTypes studio/schemaTypes && cp sanity/structure.ts studio/structure.ts",
+    "sync-schema": "rm -rf studio/schemaTypes studio/tools && cp -R sanity/schemaTypes studio/schemaTypes && cp -R sanity/tools studio/tools && cp sanity/structure.ts studio/structure.ts",
     "studio": "npm --prefix studio run dev"
   },
   "engines": {
@@ -20,7 +20,9 @@
     "@sanity/client": "^8.17.0",
     "@sanity/icons": "^5.4.0",
     "@sanity/image-url": "^2.2.0",
+    "@sanity/ui": "^4.4.12",
     "@sanity/vision": "^6.24.0",
+    "exifr": "^7.1.3",
     "next": "^16.4.6",
     "next-sanity": "^13.5.1",
     "react": "^19.3.1",

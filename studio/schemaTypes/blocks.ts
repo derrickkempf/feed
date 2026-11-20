@@ -80,9 +80,22 @@ export const feedImage = defineType({
   type: 'object',
   icon: ImageIcon,
   fields: [
-    defineField({name: 'image', type: 'image', options: {hotspot: true}, validation: (r) => r.required()}),
+    defineField({
+      name: 'image',
+      type: 'image',
+      // keep camera metadata (capture date, GPS) on the asset
+      options: {hotspot: true, metadata: ['exif', 'location', 'lqip', 'palette', 'blurhash']},
+      validation: (r) => r.required(),
+    }),
     defineField({name: 'caption', type: 'string'}),
     defineField({name: 'tags', type: 'array', of: [{type: 'string'}], options: {layout: 'tags'}}),
+    defineField({
+      name: 'takenAt',
+      title: 'Taken at',
+      type: 'datetime',
+      readOnly: true,
+      description: 'Capture time from the photo’s EXIF data (set by Archive import).',
+    }),
     defineField({
       name: 'project',
       title: 'Linked work',
@@ -94,11 +107,16 @@ export const feedImage = defineType({
     layoutField,
   ],
   preview: {
-    select: {media: 'image', title: 'caption', tags: 'tags'},
-    prepare: ({media, title, tags}) => ({
+    select: {media: 'image', title: 'caption', tags: 'tags', takenAt: 'takenAt'},
+    prepare: ({media, title, tags, takenAt}) => ({
       media,
       title: title || 'Image',
-      subtitle: (tags || []).join(', '),
+      subtitle: [
+        takenAt ? new Date(takenAt).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'}) : '',
+        (tags || []).join(', '),
+      ]
+        .filter(Boolean)
+        .join(' · '),
     }),
   },
 })
