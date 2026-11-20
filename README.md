@@ -25,6 +25,23 @@ Old hash links redirect automatically (`components/HashRedirect.tsx`).
 - **About** (singleton): photo and body.
 - **Site settings** (singleton): wordmark, tagline, feed headline, SEO and share image, footer link, and the Fourthwall shop URL and storefront token.
 
+## Archive import (bulk upload by date)
+
+In either Studio, open **Archive import** in the top bar.
+
+1. Drop in images or whole folders, or use **Choose images…** / **Choose a folder…**. Subfolders are included, and non-image files are ignored.
+2. Each photo's date is read from its EXIF data (`DateTimeOriginal`, then `CreateDate` / `DateTimeDigitized`, then `ModifyDate`). Photos without EXIF use the file's modified date and are labeled **file date** in the review list.
+3. Review how many images go to each day, choose **Add as drafts** (the default) or **Publish immediately**, and click **Import**.
+
+How it files images:
+- Each image goes into the **Day** for its capture date. Days that don't exist yet are created. Existing days get the new images appended after what's already there, so nothing is replaced.
+- Within a day, images are ordered by capture time.
+- An image already used anywhere in the feed is skipped. Sanity recognizes an identical file even if it has a different name, so re-running the same folder is safe.
+- Camera metadata (EXIF, GPS, colour palette) is kept on the asset, and each image's **Taken at** time is saved and shown in the Studio.
+- Dates come from the camera's clock, which has no time zone. A photo shot at 00:10 lands on that later day.
+
+Keep the tab open while it runs. Uploads go four at a time.
+
 ## Setup
 
 ```bash
@@ -49,7 +66,7 @@ The Sanity project is **`ppc8ofpe`** (dataset `production`), already filled in `
   npm run deploy   # publish to <name>.sanity.studio
   ```
 
-Both Studios edit the same content. The content types live in `sanity/schemaTypes`. After changing them, run `npm run sync-schema` to copy them into `studio/`.
+Both Studios edit the same content. The content types live in `sanity/schemaTypes`. After changing them (or the Studio tools in `sanity/tools`), run `npm run sync-schema` to copy them into `studio/`.
 
 ## Migrating the old content
 
